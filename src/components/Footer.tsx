@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             <span className="rounded-lg bg-white p-1">
               <Image
-                src="/logo-mark.svg"
+                src="/logo-mark.png"
                 alt="Golden Triangle Peptides"
                 width={36}
                 height={36}

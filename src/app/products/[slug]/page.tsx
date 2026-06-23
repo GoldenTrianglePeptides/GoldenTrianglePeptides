@@ -53,7 +53,7 @@ export default async function ProductPage({
         {/* Image panel */}
         <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-white p-6">
           <div className="flex items-center gap-2">
-            <Image src="/logo-mark.svg" alt="" width={28} height={28} />
+            <Image src="/logo-mark.png" alt="" width={28} height={28} />
             <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-navy">
               Golden Triangle <span className="text-gold">Peptides</span>
             </span>

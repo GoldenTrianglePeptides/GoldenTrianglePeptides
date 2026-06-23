@@ -43,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         {/* Brand lockup */}
         <div className="flex items-center gap-2">
-          <Image src="/logo-mark.svg" alt="" width={26} height={26} />
+          <Image src="/logo-mark.png" alt="" width={26} height={26} />
           <span className="text-[0.6rem] font-bold uppercase leading-none tracking-[0.15em] text-navy">
             Golden Triangle{" "}
             <span className="text-gold">Peptides</span>
