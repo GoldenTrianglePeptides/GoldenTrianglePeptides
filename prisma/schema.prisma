@@ -28,6 +28,7 @@ model Product {
   name        String
   description String
   category    String
+  cas         String?
   priceCents  Int
   sizeMg      Int
   purity      String

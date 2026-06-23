@@ -8,6 +8,7 @@ const products = [
     slug: "bpc-157-5mg",
     name: "BPC-157",
     category: "Healing & Recovery",
+    cas: "137525-51-0",
     description:
       "BPC-157 is a synthetic peptide fragment studied for its role in tissue repair, angiogenesis, and recovery research. Lyophilized powder supplied for laboratory research use only.",
     priceCents: 4999,
@@ -20,6 +21,7 @@ const products = [
     slug: "tb-500-5mg",
     name: "TB-500 (Thymosin Beta-4)",
     category: "Healing & Recovery",
+    cas: "77591-33-4",
     description:
       "TB-500 is a synthetic version of the naturally occurring peptide Thymosin Beta-4, widely used in cellular migration and recovery research. Lyophilized powder for laboratory use only.",
     priceCents: 5999,
@@ -32,6 +34,7 @@ const products = [
     slug: "ghk-cu-50mg",
     name: "GHK-Cu (Copper Peptide)",
     category: "Skin & Cosmetic",
+    cas: "89030-95-5",
     description:
       "GHK-Cu is a copper-binding tripeptide investigated for collagen synthesis and skin remodeling research. Lyophilized powder supplied for laboratory research use only.",
     priceCents: 6499,
@@ -44,6 +47,7 @@ const products = [
     slug: "semaglutide-5mg",
     name: "Semaglutide",
     category: "Metabolic Research",
+    cas: "910463-68-2",
     description:
       "Semaglutide is a GLP-1 receptor agonist peptide studied extensively in metabolic and glucose-regulation research. Lyophilized powder for laboratory research use only.",
     priceCents: 12999,
@@ -56,18 +60,20 @@ const products = [
     slug: "tirzepatide-10mg",
     name: "Tirzepatide",
     category: "Metabolic Research",
+    cas: "2023788-19-2",
     description:
       "Tirzepatide is a dual GIP/GLP-1 receptor agonist peptide used in metabolic research applications. Lyophilized powder supplied for laboratory research use only.",
     priceCents: 18999,
     sizeMg: 10,
     purity: "≥ 99%",
     imageUrl: "/products/vial.png.jpeg",
-    featured: false,
+    featured: true,
   },
   {
     slug: "ipamorelin-5mg",
     name: "Ipamorelin",
     category: "Growth Research",
+    cas: "170851-70-4",
     description:
       "Ipamorelin is a selective growth hormone secretagogue peptide investigated in endocrine research. Lyophilized powder for laboratory research use only.",
     priceCents: 4499,
@@ -80,6 +86,7 @@ const products = [
     slug: "cjc-1295-no-dac-5mg",
     name: "CJC-1295 (No DAC)",
     category: "Growth Research",
+    cas: "863288-34-0",
     description:
       "CJC-1295 without DAC is a growth hormone releasing hormone analog studied for its pulsatile signaling research properties. Lyophilized powder for laboratory use only.",
     priceCents: 5499,
@@ -92,6 +99,7 @@ const products = [
     slug: "melanotan-ii-10mg",
     name: "Melanotan II",
     category: "Pigmentation Research",
+    cas: "121062-08-6",
     description:
       "Melanotan II is a synthetic analog of the peptide hormone alpha-MSH, studied in pigmentation research. Lyophilized powder supplied for laboratory research use only.",
     priceCents: 3999,
@@ -99,11 +107,13 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png.jpeg",
     featured: false,
+    inStock: false,
   },
   {
     slug: "bacteriostatic-water-30ml",
     name: "Bacteriostatic Water (30 mL)",
     category: "Lab Supplies",
+    cas: null,
     description:
       "Sterile bacteriostatic water containing 0.9% benzyl alcohol, used for reconstituting lyophilized research peptides in the laboratory.",
     priceCents: 1499,

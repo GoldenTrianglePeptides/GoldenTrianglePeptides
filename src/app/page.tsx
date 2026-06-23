@@ -5,10 +5,29 @@ import ProductCard from "@/components/ProductCard";
 
 export const dynamic = "force-dynamic";
 
+const FEATURES = [
+  {
+    title: "Independent Laboratory Analysis",
+    body: "Every compound is verified by independent, third-party laboratories before it reaches your bench.",
+  },
+  {
+    title: "Wholesale Pricing",
+    body: "We're committed to a low, transparent cost per milligram sourced from high-quality partners.",
+  },
+  {
+    title: "Free Shipping",
+    body: "Orders over $400 ship free — always — with discreet, tracked delivery across the U.S.",
+  },
+  {
+    title: "99%+ Pure Peptides",
+    body: "All products are offered at the highest quality, with verified purity of 99% or greater.",
+  },
+];
+
 export default async function Home() {
   const featured = await prisma.product.findMany({
     where: { featured: true },
-    take: 4,
+    take: 3,
     orderBy: { priceCents: "asc" },
   });
 
@@ -16,34 +35,34 @@ export default async function Home() {
     <div>
       {/* Hero */}
       <section className="bg-navy text-white">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-16 md:grid-cols-2 md:py-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-gold-light">
               Precision Peptides. Purpose Driven.
             </p>
-            <h1 className="font-serif text-4xl font-bold leading-tight md:text-5xl">
-              Research-Grade Peptides You Can Trust
+            <h1 className="text-4xl font-extrabold uppercase leading-[1.05] tracking-tight md:text-5xl">
+              Research-Grade Peptides, Independently Verified for Purity
             </h1>
-            <p className="mt-4 max-w-md text-white/80">
+            <p className="mt-5 max-w-md text-white/80">
               Golden Triangle Peptides supplies lab-tested, high-purity research
-              compounds with third-party verification. Built for researchers who
-              demand consistency and quality.
+              compounds with third-party verification — built for researchers
+              who demand consistency and quality.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 href="/products"
-                className="rounded-lg bg-gold px-6 py-3 font-semibold text-navy-dark transition hover:bg-gold-light"
+                className="rounded-lg bg-gold px-7 py-3 font-semibold uppercase tracking-wide text-navy-dark transition hover:bg-gold-light"
               >
-                Shop Products
+                Shop Now
               </Link>
               <Link
-                href="/register"
-                className="rounded-lg border border-gold/50 px-6 py-3 font-semibold text-white transition hover:border-gold-light"
+                href="/certifications"
+                className="rounded-lg border border-gold/50 px-7 py-3 font-semibold uppercase tracking-wide text-white transition hover:border-gold-light hover:text-gold-light"
               >
-                Create Account
+                Certifications
               </Link>
             </div>
-            <div className="mt-8 flex gap-8 text-sm">
+            <div className="mt-10 flex gap-8 text-sm">
               <div>
                 <p className="text-2xl font-bold text-gold-light">≥99%</p>
                 <p className="text-white/70">Verified purity</p>
@@ -58,64 +77,117 @@ export default async function Home() {
               </div>
             </div>
           </div>
-          <div className="flex justify-center">
-            <Image
-              src="/products/Golden.png.jpeg"
-              alt="Golden Triangle Peptides"
-              width={720}
-              height={712}
-              preload
-              className="h-auto w-full max-w-[440px] rounded-2xl shadow-2xl"
-            />
+
+          {/* Product showcase */}
+          <div className="relative mx-auto w-full max-w-md">
+            <div className="relative overflow-hidden rounded-3xl border border-gold/20 bg-gradient-to-br from-white/10 to-white/0 p-6 shadow-2xl backdrop-blur-sm">
+              <div className="absolute right-5 top-5 rounded-md border border-gold/50 bg-navy-dark/60 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-gold-light">
+                Purity ≥99% HPLC
+              </div>
+              <Image
+                src="/products/vial.png.jpeg"
+                alt="Golden Triangle Peptides research vial"
+                width={520}
+                height={690}
+                preload
+                className="mx-auto h-auto w-full max-w-[300px] rounded-2xl"
+              />
+              <div className="mt-4 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wide text-white/80">
+                <span className="rounded-sm border border-gold/40 px-2 py-0.5">
+                  RUO
+                </span>
+                Lyophilized · Cold-Shipped
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Trust bar */}
+      {/* Disclaimer strip */}
       <section className="border-b border-black/5 bg-white">
-        <div className="mx-auto grid max-w-6xl gap-4 px-4 py-6 text-center text-sm sm:grid-cols-3">
-          <div className="font-medium text-navy">🔬 Third-Party Lab Tested</div>
-          <div className="font-medium text-navy">🧊 Lyophilized & Cold-Shipped</div>
-          <div className="font-medium text-navy">📦 Discreet, Tracked Shipping</div>
-        </div>
+        <p className="mx-auto max-w-6xl px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.15em] text-navy/70">
+          For research use only. Not for use in diagnostic procedures.
+        </p>
       </section>
 
-      {/* Featured products */}
-      <section className="mx-auto max-w-6xl px-4 py-14">
-        <div className="mb-8 flex items-end justify-between">
-          <div>
-            <h2 className="font-serif text-3xl font-bold text-navy">
-              Featured Products
-            </h2>
-            <p className="mt-1 text-zinc-500">Our most requested research peptides.</p>
-          </div>
-          <Link href="/products" className="text-sm font-semibold text-gold hover:underline">
-            View all →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-4">
-          {featured.map((p) => (
-            <ProductCard key={p.id} product={p} />
+      {/* Feature row */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 text-center sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map((f) => (
+            <div key={f.title}>
+              <div className="mx-auto mb-3 h-0.5 w-10 bg-gold" />
+              <h3 className="text-sm font-bold uppercase tracking-wide text-navy">
+                {f.title}
+              </h3>
+              <p className="mt-2 text-sm text-zinc-500">{f.body}</p>
+            </div>
           ))}
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="bg-gradient-to-r from-navy to-navy-dark text-white">
-        <div className="mx-auto max-w-6xl px-4 py-14 text-center">
-          <h2 className="font-serif text-3xl font-bold">
-            Create an account & start ordering
-          </h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/80">
-            Sign up to track orders, save your shipping details, and check out
-            faster on every purchase.
-          </p>
-          <Link
-            href="/register"
-            className="mt-6 inline-block rounded-lg bg-gold px-8 py-3 font-semibold text-navy-dark transition hover:bg-gold-light"
-          >
-            Create Your Free Account
-          </Link>
+      {/* Featured products */}
+      <section className="bg-background">
+        <div className="mx-auto max-w-6xl px-4 py-16">
+          <div className="mb-10 text-center">
+            <h2 className="text-3xl font-extrabold uppercase tracking-tight text-navy">
+              Featured Products
+            </h2>
+            <p className="mt-2 text-zinc-500">
+              Our most requested research peptides.
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+          <div className="mt-10 text-center">
+            <Link
+              href="/products"
+              className="inline-block rounded-lg border border-navy px-7 py-3 text-sm font-bold uppercase tracking-wide text-navy transition hover:bg-navy hover:text-white"
+            >
+              View All Products
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Research storefront CTA */}
+      <section className="bg-gradient-to-b from-background to-white">
+        <div className="mx-auto max-w-6xl px-4 py-16">
+          <div className="grid items-center gap-8 rounded-3xl border border-black/5 bg-white p-8 shadow-sm md:grid-cols-2 md:p-12">
+            <div>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-[0.3em] text-gold">
+                Research Storefront
+              </p>
+              <h2 className="text-3xl font-extrabold leading-tight tracking-tight text-navy md:text-4xl">
+                The trusted peptide source for verified quality, dependable
+                research support, and independent analysis.
+              </h2>
+            </div>
+            <div>
+              <p className="text-zinc-600">
+                Golden Triangle Peptides connects the research community with
+                high-purity compounds, transparent certification standards, and
+                a polished storefront built for confidence, clarity, and repeat
+                ordering.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-4">
+                <Link
+                  href="/products"
+                  className="rounded-full bg-navy px-6 py-3 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-navy-dark"
+                >
+                  Browse Products
+                </Link>
+                <Link
+                  href="/certifications"
+                  className="rounded-full border border-navy/30 px-6 py-3 text-sm font-bold uppercase tracking-wide text-navy transition hover:border-navy"
+                >
+                  Independent Certifications
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>

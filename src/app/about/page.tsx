@@ -12,7 +12,7 @@ export default function AboutPage() {
           <p className="mb-2 text-sm font-semibold uppercase tracking-[0.3em] text-gold-light">
             Precision Peptides. Purpose Driven.
           </p>
-          <h1 className="font-serif text-4xl font-bold">
+          <h1 className="text-4xl font-extrabold uppercase tracking-tight">
             About Golden Triangle Peptides
           </h1>
         </div>
@@ -49,7 +49,7 @@ export default function AboutPage() {
           </div>
 
           <div id="contact" className="rounded-xl border border-black/10 bg-white p-6">
-            <h2 className="font-serif text-2xl font-bold text-navy">Contact Us</h2>
+            <h2 className="text-2xl font-extrabold tracking-tight text-navy">Contact Us</h2>
             <p className="mt-2 text-sm">
               Questions about an order or a product? Reach our team at{" "}
               <a
