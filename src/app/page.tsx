@@ -61,10 +61,11 @@ export default async function Home() {
           <div className="flex justify-center">
             <div className="rounded-2xl bg-gradient-to-b from-white to-zinc-100 p-6 shadow-2xl">
               <Image
-                src="/products/vial.svg"
+                src="/products/vial.jpg"
                 alt="Golden Triangle Peptides research vial"
-                width={300}
-                height={440}
+                width={320}
+                height={432}
+                className="rounded-lg"
                 priority
               />
             </div>

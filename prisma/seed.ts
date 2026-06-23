@@ -13,7 +13,7 @@ const products = [
     priceCents: 4999,
     sizeMg: 5,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: true,
   },
   {
@@ -25,7 +25,7 @@ const products = [
     priceCents: 5999,
     sizeMg: 5,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: true,
   },
   {
@@ -37,7 +37,7 @@ const products = [
     priceCents: 6499,
     sizeMg: 50,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: true,
   },
   {
@@ -49,7 +49,7 @@ const products = [
     priceCents: 12999,
     sizeMg: 5,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: true,
   },
   {
@@ -61,7 +61,7 @@ const products = [
     priceCents: 18999,
     sizeMg: 10,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: false,
   },
   {
@@ -73,7 +73,7 @@ const products = [
     priceCents: 4499,
     sizeMg: 5,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: false,
   },
   {
@@ -85,7 +85,7 @@ const products = [
     priceCents: 5499,
     sizeMg: 5,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: false,
   },
   {
@@ -97,7 +97,7 @@ const products = [
     priceCents: 3999,
     sizeMg: 10,
     purity: "≥ 99%",
-    imageUrl: "/products/vial.svg",
+    imageUrl: "/products/vial.jpg",
     featured: false,
   },
   {
