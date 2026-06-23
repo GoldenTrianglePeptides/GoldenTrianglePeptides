@@ -54,7 +54,7 @@ export default async function ProductPage({
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-contain p-10"
-              priority
+              preload
             />
           </div>
         </div>
