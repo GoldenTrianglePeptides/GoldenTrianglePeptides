@@ -78,26 +78,17 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Product showcase */}
-          <div className="relative mx-auto w-full max-w-md">
-            <div className="relative overflow-hidden rounded-3xl border border-gold/20 bg-gradient-to-br from-white/10 to-white/0 p-6 shadow-2xl backdrop-blur-sm">
-              <div className="absolute right-5 top-5 rounded-md border border-gold/50 bg-navy-dark/60 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-gold-light">
-                Purity ≥99% HPLC
-              </div>
+          {/* Brand logo */}
+          <div className="mx-auto w-full max-w-md">
+            <div className="rounded-3xl bg-white p-8 shadow-2xl sm:p-10">
               <Image
-                src="/products/vial.png.jpeg"
-                alt="Golden Triangle Peptides research vial"
-                width={520}
-                height={690}
+                src="/goldentriangle.png"
+                alt="Golden Triangle Peptides"
+                width={2400}
+                height={1960}
                 preload
-                className="mx-auto h-auto w-full max-w-[300px] rounded-2xl"
+                className="h-auto w-full"
               />
-              <div className="mt-4 flex items-center justify-center gap-3 text-xs font-bold uppercase tracking-wide text-white/80">
-                <span className="rounded-sm border border-gold/40 px-2 py-0.5">
-                  RUO
-                </span>
-                Lyophilized · Cold-Shipped
-              </div>
             </div>
           </div>
         </div>

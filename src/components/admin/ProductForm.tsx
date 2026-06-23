@@ -116,12 +116,12 @@ export default function ProductForm({
           <input
             name="imageUrl"
             required
-            defaultValue={product?.imageUrl ?? "/products/vial.png.jpeg"}
+            defaultValue={product?.imageUrl ?? "/products/vial.png"}
             className={field}
           />
           <span className="mt-1 block text-xs text-zinc-500">
             A file under <code>/public</code> (e.g.{" "}
-            <code>/products/vial.png.jpeg</code>).
+            <code>/products/vial.png</code>).
           </span>
         </label>
 

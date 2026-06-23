@@ -35,21 +35,14 @@ export default function Header() {
       {/* Utility row */}
       <div className="border-b border-black/5 bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center">
             <Image
-              src="/logo-mark.svg"
+              src="/goldentriangle.png"
               alt="Golden Triangle Peptides"
-              width={40}
-              height={40}
+              width={2400}
+              height={1960}
+              className="h-14 w-auto sm:h-16"
             />
-            <span className="leading-tight">
-              <span className="block font-serif text-lg font-semibold tracking-wide text-navy">
-                GOLDEN TRIANGLE
-              </span>
-              <span className="block text-[0.7rem] tracking-[0.3em] text-gold">
-                PEPTIDES
-              </span>
-            </span>
           </Link>
 
           <div className="flex items-center gap-5">
