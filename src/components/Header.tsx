@@ -38,13 +38,7 @@ export default function Header() {
 
         <nav className="hidden items-center gap-6 text-sm font-medium md:flex">
           <Link href="/products" className="hover:text-gold-light">
-            Shop
-          </Link>
-          <Link href="/products?category=Healing+%26+Recovery" className="hover:text-gold-light">
-            Recovery
-          </Link>
-          <Link href="/products?category=Metabolic+Research" className="hover:text-gold-light">
-            Metabolic
+            Products
           </Link>
           <Link href="/about" className="hover:text-gold-light">
             About
@@ -101,7 +95,7 @@ export default function Header() {
         <div className="border-t border-gold/20 bg-navy-dark px-4 py-3 md:hidden">
           <div className="flex flex-col gap-2 text-sm">
             <Link href="/products" onClick={() => setMenuOpen(false)}>
-              Shop
+              Products
             </Link>
             <Link href="/about" onClick={() => setMenuOpen(false)}>
               About

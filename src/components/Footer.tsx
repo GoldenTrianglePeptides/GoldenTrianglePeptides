@@ -21,8 +21,6 @@ export default function Footer() {
           <h3 className="mb-3 text-sm font-semibold text-gold-light">Shop</h3>
           <ul className="space-y-2 text-sm text-white/80">
             <li><Link href="/products" className="hover:text-gold-light">All Products</Link></li>
-            <li><Link href="/products?category=Healing+%26+Recovery" className="hover:text-gold-light">Recovery</Link></li>
-            <li><Link href="/products?category=Metabolic+Research" className="hover:text-gold-light">Metabolic</Link></li>
             <li><Link href="/products?category=Lab+Supplies" className="hover:text-gold-light">Lab Supplies</Link></li>
           </ul>
         </div>
