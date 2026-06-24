@@ -64,7 +64,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </h3>
 
           <p className="mt-3 text-lg font-bold text-navy">
-            {product.sizeMg > 0 ? `${product.sizeMg} mg` : "30 mL"}
+            {product.sizeMg > 0 ? `${product.sizeMg} mg` : "10 mL"}
           </p>
           <p className="text-xs text-zinc-500">
             {product.sizeMg > 0 ? "Lyophilized vial" : "Sterile solution"}
