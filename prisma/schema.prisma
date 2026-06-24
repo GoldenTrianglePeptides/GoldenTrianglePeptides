@@ -49,6 +49,14 @@ model Product {
   sizeMg      Int
   purity      String
   imageUrl    String
+  // Optional structured detail fields rendered on the product page.
+  // Empty fields simply don't render — fill them in via /admin per product.
+  storage         String? // e.g. "Store lyophilized at -20°C; refrigerate after reconstitution."
+  reconstitution  String? // e.g. "Add 1–2 mL bacteriostatic water to the vial."
+  researchNotes   String? // free-form research-use-only notes / context
+  molecularFormula String? // e.g. C254H377N73O76S2
+  molecularWeight  String? // e.g. "5929.7 g/mol"
+  sequence         String? // single-letter amino-acid sequence
   featured    Boolean          @default(false)
   inStock     Boolean          @default(true)
   createdAt   DateTime         @default(now())

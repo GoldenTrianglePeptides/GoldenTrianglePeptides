@@ -13,6 +13,12 @@ type ProductValues = {
   imageUrl: string;
   featured: boolean;
   inStock: boolean;
+  storage: string | null;
+  reconstitution: string | null;
+  researchNotes: string | null;
+  molecularFormula: string | null;
+  molecularWeight: string | null;
+  sequence: string | null;
 };
 
 const field =
@@ -136,6 +142,80 @@ export default function ProductForm({
           />
         </label>
       </div>
+
+      {/* Optional product-detail fields shown in the on-page tabs. Leaving
+          one blank just hides that row on the product page. */}
+      <fieldset className="mt-6 border-t border-black/10 pt-5">
+        <legend className="-mt-7 mb-2 inline-block bg-white px-2 text-xs font-bold uppercase tracking-wide text-zinc-500">
+          Product details (optional)
+        </legend>
+
+        <div className="grid gap-5 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <span className={labelText}>Storage</span>
+            <textarea
+              name="storage"
+              rows={3}
+              defaultValue={product?.storage ?? ""}
+              placeholder="e.g. Store lyophilized at -20°C; refrigerate after reconstitution and use within 4 weeks."
+              className={field}
+            />
+          </label>
+
+          <label className="block sm:col-span-2">
+            <span className={labelText}>Reconstitution</span>
+            <textarea
+              name="reconstitution"
+              rows={2}
+              defaultValue={product?.reconstitution ?? ""}
+              placeholder="e.g. Add 1–2 mL bacteriostatic water to the vial; swirl gently."
+              className={field}
+            />
+          </label>
+
+          <label className="block sm:col-span-2">
+            <span className={labelText}>Research notes</span>
+            <textarea
+              name="researchNotes"
+              rows={4}
+              defaultValue={product?.researchNotes ?? ""}
+              placeholder="Optional. Background, related studies, mechanism — anything you want shown in the Research Notes tab."
+              className={field}
+            />
+          </label>
+
+          <label className="block">
+            <span className={labelText}>Molecular formula</span>
+            <input
+              name="molecularFormula"
+              defaultValue={product?.molecularFormula ?? ""}
+              placeholder="e.g. C254H377N73O76S2"
+              className={field}
+            />
+          </label>
+
+          <label className="block">
+            <span className={labelText}>Molecular weight</span>
+            <input
+              name="molecularWeight"
+              defaultValue={product?.molecularWeight ?? ""}
+              placeholder="e.g. 5929.7 g/mol"
+              className={field}
+            />
+          </label>
+
+          <label className="block sm:col-span-2">
+            <span className={labelText}>Amino-acid sequence</span>
+            <textarea
+              name="sequence"
+              rows={2}
+              defaultValue={product?.sequence ?? ""}
+              placeholder="Single-letter sequence (optional)"
+              className={field + " font-mono text-xs"}
+            />
+          </label>
+        </div>
+      </fieldset>
 
       <div className="mt-5 flex flex-wrap gap-6">
         <label className="flex items-center gap-2 text-sm font-medium text-navy">

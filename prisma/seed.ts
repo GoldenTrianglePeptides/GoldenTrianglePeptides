@@ -270,6 +270,19 @@ async function main() {
   }
   console.log(`Ensured ${products.length} baseline products with variants.`);
 
+  // Backfill default storage text on any product that doesn't have one yet, so
+  // the on-page "Storage Details" tab always has something useful. Per-product
+  // edits set via /admin are preserved (we only touch null values).
+  const defaultStorage =
+    "Store lyophilized peptide at -20°C, protected from light. Shelf-stable in lyophilized form for 12+ months. Once reconstituted with bacteriostatic water, refrigerate at 2–8°C and use within 4 weeks for optimal stability.";
+  const filled = await prisma.product.updateMany({
+    where: { storage: null },
+    data: { storage: defaultStorage },
+  });
+  if (filled.count > 0) {
+    console.log(`Backfilled default storage text on ${filled.count} products.`);
+  }
+
   // Admin account — credentials come from the environment so the live site is
   // never seeded with a publicly known default password.
   const adminEmail =

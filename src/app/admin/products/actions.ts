@@ -37,14 +37,17 @@ function refreshStorefront() {
   revalidatePath("/");
 }
 
+// Empty-string => null so optional textareas can be cleared cleanly.
+const optionalText = z
+  .string()
+  .trim()
+  .optional()
+  .transform((v) => (v ? v : null));
+
 const ProductInput = z.object({
   name: z.string().trim().min(1),
   category: z.string().trim().min(1),
-  cas: z
-    .string()
-    .trim()
-    .optional()
-    .transform((v) => (v ? v : null)),
+  cas: optionalText,
   price: z.coerce.number().min(0),
   sizeMg: z.coerce.number().int().min(0),
   purity: z.string().trim().min(1),
@@ -52,6 +55,12 @@ const ProductInput = z.object({
   imageUrl: z.string().trim().min(1),
   featured: z.boolean(),
   inStock: z.boolean(),
+  storage: optionalText,
+  reconstitution: optionalText,
+  researchNotes: optionalText,
+  molecularFormula: optionalText,
+  molecularWeight: optionalText,
+  sequence: optionalText,
 });
 
 export async function toggleStock(id: string) {
@@ -127,6 +136,12 @@ export async function saveProduct(formData: FormData) {
     imageUrl: formData.get("imageUrl"),
     featured: formData.get("featured") === "on",
     inStock: formData.get("inStock") === "on",
+    storage: formData.get("storage") ?? undefined,
+    reconstitution: formData.get("reconstitution") ?? undefined,
+    researchNotes: formData.get("researchNotes") ?? undefined,
+    molecularFormula: formData.get("molecularFormula") ?? undefined,
+    molecularWeight: formData.get("molecularWeight") ?? undefined,
+    sequence: formData.get("sequence") ?? undefined,
   });
 
   if (!parsed.success) {
@@ -152,6 +167,12 @@ export async function saveProduct(formData: FormData) {
     imageUrl: d.imageUrl,
     featured: d.featured,
     inStock: d.inStock,
+    storage: d.storage,
+    reconstitution: d.reconstitution,
+    researchNotes: d.researchNotes,
+    molecularFormula: d.molecularFormula,
+    molecularWeight: d.molecularWeight,
+    sequence: d.sequence,
   };
 
   if (id) {

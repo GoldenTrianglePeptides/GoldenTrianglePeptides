@@ -6,6 +6,9 @@ import { formatPrice } from "@/lib/format";
 import { siteUrl } from "@/lib/site";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
+import ProductDetailTabs, {
+  type ProductDetailTab,
+} from "@/components/ProductDetailTabs";
 
 export const dynamic = "force-dynamic";
 
@@ -118,39 +121,75 @@ export default async function ProductPage({
       </nav>
 
       <div className="grid gap-10 md:grid-cols-2">
-        {/* Image panel */}
-        <div className="relative overflow-hidden rounded-2xl border border-black/10 bg-white p-6">
-          <div className="flex items-center gap-2">
-            <Image src="/logo-mark.png" alt="" width={28} height={28} />
-            <span className="text-[0.65rem] font-bold uppercase tracking-[0.15em] text-navy">
-              Golden Triangle <span className="text-gold">Peptides</span>
-            </span>
-          </div>
+        {/* Product label card — each product looks distinct because of its own
+            name / CAS / size / purity, printed onto a clean label with the
+            vial overlaid in the lower-right corner. */}
+        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
           {!product.inStock && (
-            <span className="absolute right-4 top-4 rounded bg-navy px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-gold-light">
+            <span className="absolute right-4 top-4 z-10 rounded bg-navy px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-gold-light">
               Out of stock
             </span>
           )}
-          <div className="relative mx-auto my-4 aspect-square max-w-sm">
+
+          {/* Vial overlay (bottom-right). pointer-events-none so the label's
+              text remains interactive. */}
+          <div className="pointer-events-none absolute bottom-0 right-0 z-0 h-3/5 w-3/5">
             <Image
               src={product.imageUrl}
               alt={product.name}
               fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-contain"
-              preload
+              sizes="(max-width: 768px) 60vw, 30vw"
+              className="object-contain object-right-bottom"
             />
           </div>
-          <div className="flex flex-wrap justify-center gap-2 text-xs font-bold uppercase tracking-wide text-navy">
-            <span className="rounded-sm border border-navy/40 px-2 py-1">
-              Purity {product.purity}
-            </span>
-            <span className="rounded-sm border border-navy/40 px-2 py-1">
-              HPLC Verified
-            </span>
-            <span className="rounded-sm border border-navy/40 px-2 py-1">
-              Research Use Only
-            </span>
+
+          {/* Label content */}
+          <div className="relative z-10 flex h-full flex-col gap-5 p-7">
+            <div className="flex items-center gap-2">
+              <Image src="/logo-mark.png" alt="" width={32} height={32} />
+              <span className="text-xs font-bold uppercase tracking-[0.15em] text-navy">
+                Golden Triangle <span className="text-gold">Peptides</span>
+              </span>
+            </div>
+
+            {product.cas && (
+              <p className="text-base font-semibold text-navy">
+                <span className="mr-2 rounded-sm border border-navy/50 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide">
+                  CAS
+                </span>
+                {product.cas}
+              </p>
+            )}
+
+            <h2 className="font-serif text-3xl font-extrabold leading-tight text-navy">
+              {product.name}
+            </h2>
+
+            <p className="text-2xl font-extrabold text-navy">
+              {product.sizeMg > 0 ? `${product.sizeMg} mg` : "Solution"}
+              {variants.length > 1 && (
+                <span className="ml-1 text-sm font-medium text-zinc-500">
+                  · {variants.length} sizes
+                </span>
+              )}
+            </p>
+
+            <div className="mt-auto space-y-2 text-xs font-semibold text-navy/90">
+              <p>
+                <span className="mr-2 rounded-sm border border-navy/50 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide">
+                  Purity
+                </span>
+                {product.purity} HPLC
+              </p>
+              <p>
+                <span className="mr-2 rounded-sm border border-navy/50 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide">
+                  RUO
+                </span>
+                Research use only.
+                <br />
+                Not for human or veterinary use.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -203,10 +242,6 @@ export default async function ProductPage({
             </div>
           </dl>
 
-          <p className="mt-6 leading-relaxed text-zinc-700">
-            {product.description}
-          </p>
-
           <div className="mt-8">
             <AddToCartButton
               product={{
@@ -227,6 +262,11 @@ export default async function ProductPage({
         </div>
       </div>
 
+      {/* Detail tabs — sections without content are omitted automatically. */}
+      <section className="mt-12">
+        <ProductDetailTabs tabs={buildDetailTabs(product, variants)} />
+      </section>
+
       {related.length > 0 && (
         <section className="mt-16">
           <h2 className="mb-6 text-2xl font-extrabold uppercase tracking-tight text-navy">
@@ -239,6 +279,129 @@ export default async function ProductPage({
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+// --- Tab content builders ---------------------------------------------------
+
+type ProductForTabs = {
+  description: string;
+  storage: string | null;
+  reconstitution: string | null;
+  researchNotes: string | null;
+  molecularFormula: string | null;
+  molecularWeight: string | null;
+  sequence: string | null;
+  cas: string | null;
+  purity: string;
+  sizeMg: number;
+};
+
+type VariantForTabs = { label: string; priceCents: number };
+
+function paragraphs(text: string): React.ReactNode {
+  return text.split(/\n+/).map((p, i) => (
+    <p key={i} className="leading-relaxed text-zinc-700">
+      {p}
+    </p>
+  ));
+}
+
+function buildDetailTabs(
+  product: ProductForTabs,
+  variants: VariantForTabs[],
+): ProductDetailTab[] {
+  const tabs: ProductDetailTab[] = [];
+
+  const hasSpecs =
+    !!product.cas ||
+    !!product.molecularFormula ||
+    !!product.molecularWeight ||
+    !!product.sequence;
+
+  // 1. Description
+  tabs.push({
+    key: "description",
+    label: "Description",
+    content: (
+      <div className="space-y-4">
+        {paragraphs(product.description)}
+        {hasSpecs && (
+          <dl className="mt-2 grid grid-cols-1 gap-x-6 gap-y-2 border-t border-black/10 pt-4 text-sm sm:grid-cols-2">
+            {product.cas && (
+              <SpecRow label="CAS Number" value={product.cas} />
+            )}
+            <SpecRow label="Purity" value={`${product.purity} HPLC`} />
+            {product.molecularFormula && (
+              <SpecRow label="Molecular Formula" value={product.molecularFormula} />
+            )}
+            {product.molecularWeight && (
+              <SpecRow label="Molecular Weight" value={product.molecularWeight} />
+            )}
+            {product.sequence && (
+              <div className="sm:col-span-2">
+                <dt className="text-zinc-500">Sequence</dt>
+                <dd className="mt-1 break-words font-mono text-xs text-navy">
+                  {product.sequence}
+                </dd>
+              </div>
+            )}
+            {variants.length > 1 && (
+              <div className="sm:col-span-2">
+                <dt className="text-zinc-500">Available Sizes</dt>
+                <dd className="mt-1 text-sm font-semibold text-navy">
+                  {variants.map((v) => v.label).join(" · ")}
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
+      </div>
+    ),
+  });
+
+  // 2. Storage Details — falls back to a generic note if no per-product
+  // storage text yet, so the tab is always useful.
+  const storageText =
+    product.storage ??
+    "Store lyophilized peptide at -20°C, protected from light. Once reconstituted with bacteriostatic water, refrigerate at 2–8°C and use within 4 weeks for optimal stability.";
+  tabs.push({
+    key: "storage",
+    label: "Storage Details",
+    content: (
+      <div className="space-y-4">
+        <p className="font-semibold text-navy">Storage</p>
+        {paragraphs(storageText)}
+        {product.reconstitution && (
+          <>
+            <p className="pt-2 font-semibold text-navy">Reconstitution</p>
+            {paragraphs(product.reconstitution)}
+          </>
+        )}
+      </div>
+    ),
+  });
+
+  // 3. Research Notes — optional; only shown when filled in.
+  if (product.researchNotes) {
+    tabs.push({
+      key: "research",
+      label: "Research Notes",
+      content: (
+        <div className="space-y-3">{paragraphs(product.researchNotes)}</div>
+      ),
+    });
+  }
+
+  return tabs;
+}
+
+function SpecRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-zinc-500">{label}</dt>
+      <dd className="font-semibold text-navy">{value}</dd>
     </div>
   );
 }
