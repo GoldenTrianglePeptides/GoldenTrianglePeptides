@@ -4,6 +4,17 @@ import {
   verifyIpnSignature,
   mapPaymentStatusToOrderStatus,
 } from "@/lib/nowpayments";
+import { sendOrderReceipt } from "@/lib/email";
+
+// Mirrors the value used at checkout; if shipping ever varies, snapshot it on
+// the order instead of re-deriving it here.
+const SHIPPING_FLAT_CENTS = 1000;
+
+function resolveSiteOrigin(request: Request): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+  return new URL(request.url).origin;
+}
 
 // HMAC verification needs the Node crypto module.
 export const runtime = "nodejs";
@@ -98,6 +109,45 @@ export async function POST(request: Request) {
       paymentRef: payload.payment_id ? String(payload.payment_id) : order.paymentRef,
     },
   });
+
+  // Send the order receipt the moment the order is confirmed paid. Email
+  // failures are logged but never fail the webhook — NOWPayments retries on
+  // non-2xx, and we don't want a transient email outage to keep flipping the
+  // order back to pending.
+  if (nextStatus === "paid") {
+    try {
+      const items = await prisma.orderItem.findMany({
+        where: { orderId: order.id },
+      });
+      const subtotalCents = items.reduce(
+        (sum, i) => sum + i.priceCents * i.quantity,
+        0,
+      );
+      await sendOrderReceipt({
+        to: order.shippingEmail,
+        orderId: order.id,
+        orderNumber: order.id.slice(-8).toUpperCase(),
+        items: items.map((i) => ({
+          name: i.name,
+          priceCents: i.priceCents,
+          quantity: i.quantity,
+        })),
+        subtotalCents,
+        shippingCents: SHIPPING_FLAT_CENTS,
+        totalCents: order.totalCents,
+        shipping: {
+          name: order.shippingName,
+          address: order.shippingAddress,
+          city: order.shippingCity,
+          state: order.shippingState,
+          zip: order.shippingZip,
+        },
+        orderUrl: `${resolveSiteOrigin(request)}/order/${order.id}`,
+      });
+    } catch (err) {
+      console.error("[webhook] Failed to enqueue receipt:", err);
+    }
+  }
 
   return new Response("OK", { status: 200 });
 }

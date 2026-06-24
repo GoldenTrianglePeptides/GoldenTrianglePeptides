@@ -20,6 +20,22 @@ model User {
   isAdmin      Boolean  @default(false)
   createdAt    DateTime @default(now())
   orders       Order[]
+  passwordResetTokens PasswordResetToken[]
+}
+
+/// One-time password reset token. We only store a SHA-256 hash of the token so
+/// the raw value (emailed to the user) cannot be reconstructed from the DB.
+/// Expires after 30 minutes and is invalidated on first successful use.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
 }
 
 model Product {
