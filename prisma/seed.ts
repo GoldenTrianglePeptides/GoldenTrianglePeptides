@@ -178,49 +178,32 @@ const products = [
 async function main() {
   console.log("Seeding database...");
 
+  // Ensure the baseline catalog exists. This is non-destructive — it never
+  // overwrites or deletes products — so any changes you make in the Admin
+  // dashboard are preserved across deploys. Manage the live catalog there.
   for (const p of products) {
     await prisma.product.upsert({
       where: { slug: p.slug },
-      update: p,
+      update: {},
       create: p,
     });
   }
-  console.log(`Seeded ${products.length} products.`);
+  console.log(`Ensured ${products.length} baseline products.`);
 
-  // Remove any products no longer in the catalog (but keep any referenced by
-  // existing orders so order history stays intact).
-  const keep = products.map((p) => p.slug);
-  const stale = await prisma.product.findMany({
-    where: { slug: { notIn: keep } },
-    select: { id: true, slug: true, _count: { select: { orderItems: true } } },
-  });
-  for (const s of stale) {
-    if (s._count.orderItems === 0) {
-      await prisma.product.delete({ where: { id: s.id } });
-      console.log(`Removed old product: ${s.slug}`);
-    } else {
-      console.log(`Kept ${s.slug} (referenced by existing orders)`);
-    }
+  // Admin account — credentials come from the environment so the live site is
+  // never seeded with a publicly known default password.
+  const adminEmail =
+    process.env.ADMIN_EMAIL || "admin@goldentrianglepeptides.com";
+  const adminPassword = process.env.ADMIN_PASSWORD || "admin1234";
+  if (!process.env.ADMIN_PASSWORD) {
+    console.warn(
+      "⚠ ADMIN_PASSWORD not set — using an insecure default. Set ADMIN_EMAIL and ADMIN_PASSWORD before going live.",
+    );
   }
-
-  const demoEmail = "demo@goldentrianglepeptides.com";
-  const passwordHash = await bcrypt.hash("demo1234", 10);
-  await prisma.user.upsert({
-    where: { email: demoEmail },
-    update: {},
-    create: {
-      email: demoEmail,
-      name: "Demo Customer",
-      passwordHash,
-    },
-  });
-  console.log(`Demo account ready: ${demoEmail} / demo1234`);
-
-  const adminEmail = "admin@goldentrianglepeptides.com";
-  const adminHash = await bcrypt.hash("admin1234", 10);
+  const adminHash = await bcrypt.hash(adminPassword, 10);
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: { isAdmin: true },
+    update: { isAdmin: true, passwordHash: adminHash },
     create: {
       email: adminEmail,
       name: "Store Admin",
@@ -228,7 +211,19 @@ async function main() {
       isAdmin: true,
     },
   });
-  console.log(`Admin account ready: ${adminEmail} / admin1234`);
+  console.log(`Admin account ready: ${adminEmail}`);
+
+  // A demo customer for local development only — never created on the live site.
+  if (process.env.NODE_ENV !== "production") {
+    const demoEmail = "demo@goldentrianglepeptides.com";
+    const passwordHash = await bcrypt.hash("demo1234", 10);
+    await prisma.user.upsert({
+      where: { email: demoEmail },
+      update: {},
+      create: { email: demoEmail, name: "Demo Customer", passwordHash },
+    });
+    console.log(`Demo account ready: ${demoEmail} / demo1234`);
+  }
 }
 
 main()

@@ -1,15 +1,15 @@
 // Prisma schema for Golden Triangle Peptides
-// Using SQLite for zero-config local development.
-// To use PostgreSQL in production, change provider to "postgresql"
-// and set `url = env("DATABASE_URL")`.
+// Uses PostgreSQL. Set DATABASE_URL (and DATABASE_URL_UNPOOLED for
+// migrations) in the environment — e.g. via the Vercel + Neon integration.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
