@@ -11,7 +11,7 @@ history.
 - 🛍️ **Product catalog** with categories, product detail pages, and related items
 - 👤 **User accounts** — register, sign in/out with securely hashed passwords and httpOnly session cookies
 - 🛒 **Shopping cart** that persists in the browser
-- 💳 **Checkout & orders** — place orders that are saved to your account (demo payment mode out of the box; Stripe-ready)
+- 💳 **Crypto checkout** — pay with Bitcoin, Ethereum, USDT, USDC and more via NOWPayments; funds settle directly to your own wallet
 - 📦 **Order history & confirmation** pages
 - 🔐 **Admin dashboard** (`/admin`) showing orders, revenue, products, and customers
 - 📱 Responsive design in the brand's navy & gold theme
@@ -30,7 +30,7 @@ history.
 # 1. Install dependencies
 npm install
 
-# 2. Create the database and load sample products + demo accounts
+# 2. Create the database and load sample products + the admin account
 npm run db:setup
 
 # 3. Start the dev server
@@ -39,14 +39,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Demo accounts
+### Admin account
 
-| Role     | Email                                   | Password    |
-| -------- | --------------------------------------- | ----------- |
-| Customer | `demo@goldentrianglepeptides.com`       | `demo1234`  |
-| Admin    | `admin@goldentrianglepeptides.com`      | `admin1234` |
+The seed creates one admin user using the `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+environment variables (defaults to `admin@goldentrianglepeptides.com` /
+`admin1234` for local development — override these for production).
 
-You can also register a brand-new account from the **Create Account** page.
+Customer accounts are created via the **Create Account** page.
 
 ## Useful Scripts
 
@@ -75,10 +74,10 @@ The database location is configured directly in `prisma/schema.prisma`
 2. **Switch to a hosted database** (recommended): in `prisma/schema.prisma`, change
    the datasource to `provider = "postgresql"` with `url = env("DATABASE_URL")`,
    set `DATABASE_URL`, then run `npx prisma migrate deploy`.
-3. **Enable real payments:** the checkout API (`src/app/api/checkout/route.ts`)
-   currently records orders in demo mode. Integrate a payment processor such as
-   Stripe there and only create the order after the charge succeeds. Add your
-   keys to `.env`.
+3. **Crypto payments:** the store takes cryptocurrency at checkout via
+   NOWPayments (non-custodial — funds settle directly to your own wallet). See
+   `CRYPTO_SETUP.md` for a step-by-step guide to setting your API key, IPN
+   secret, and payout wallet address.
 
 ## Compliance Note
 
@@ -93,7 +92,7 @@ products in your jurisdiction.
 ```
 prisma/
   schema.prisma     # Database models (User, Product, Order, OrderItem)
-  seed.ts           # Sample products + demo accounts
+  seed.ts           # Sample products + the admin account
 src/
   app/
     page.tsx                 # Home

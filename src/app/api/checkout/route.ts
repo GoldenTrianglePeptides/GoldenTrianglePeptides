@@ -138,76 +138,33 @@ export async function POST(request: Request) {
   const total = subtotal + SHIPPING_FLAT_CENTS;
 
   // --- Payment ---
-  // When a crypto processor is configured we create the order as
-  // "awaiting_payment", open a hosted NOWPayments invoice, and let the IPN
-  // webhook flip it to "paid" once the customer pays. With no processor
-  // configured the store falls back to demo mode (instant "paid") so the flow
-  // still works end-to-end before the API keys are added.
+  // Crypto-only checkout. We create the order as "awaiting_payment", open a
+  // hosted NOWPayments invoice, and let the IPN webhook flip it to "paid"
+  // once the blockchain confirms it. If the processor isn't configured (e.g.
+  // a misconfigured deploy), we refuse to take the order rather than silently
+  // recording an unpaid one.
+  if (!nowpayments.isConfigured()) {
+    console.error(
+      "Checkout attempted but NOWPAYMENTS_API_KEY is not set. " +
+        "Add the crypto payment env vars in Vercel and redeploy.",
+    );
+    return NextResponse.json(
+      {
+        error:
+          "Payments are temporarily unavailable. Please try again shortly.",
+      },
+      { status: 503 },
+    );
+  }
+
   const orderDescription = `Golden Triangle Peptides order (${
     lineItems.length
   } item${lineItems.length === 1 ? "" : "s"})`;
 
-  if (nowpayments.isConfigured()) {
-    const order = await prisma.order.create({
-      data: {
-        userId: user.id,
-        status: "awaiting_payment",
-        totalCents: total,
-        shippingName: shipping.name,
-        shippingEmail: shipping.email,
-        shippingAddress: shipping.address,
-        shippingCity: shipping.city,
-        shippingState: shipping.state,
-        shippingZip: shipping.zip,
-        paymentProvider: "nowpayments",
-        items: { create: lineItems },
-      },
-    });
-
-    const origin = resolveOrigin(request);
-    try {
-      const invoice = await nowpayments.createInvoice({
-        orderId: order.id,
-        priceUsd: total / 100,
-        description: orderDescription,
-        successUrl: `${origin}/order/${order.id}?paid=1`,
-        cancelUrl: `${origin}/order/${order.id}`,
-        ipnCallbackUrl: `${origin}/api/webhooks/nowpayments`,
-      });
-
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          paymentRef: invoice.invoiceId,
-          paymentUrl: invoice.invoiceUrl,
-        },
-      });
-
-      return NextResponse.json({
-        orderId: order.id,
-        invoiceUrl: invoice.invoiceUrl,
-      });
-    } catch (err) {
-      // Couldn't open an invoice — mark the order failed and surface an error.
-      console.error("NOWPayments invoice creation failed:", err);
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { status: "failed" },
-      });
-      return NextResponse.json(
-        { error: "Could not start the crypto payment. Please try again." },
-        { status: 502 },
-      );
-    }
-  }
-
-  // Demo fallback: no processor configured, record the order as paid.
-  const paymentRef = `DEMO-${Date.now().toString(36).toUpperCase()}`;
-
   const order = await prisma.order.create({
     data: {
       userId: user.id,
-      status: "paid",
+      status: "awaiting_payment",
       totalCents: total,
       shippingName: shipping.name,
       shippingEmail: shipping.email,
@@ -215,10 +172,44 @@ export async function POST(request: Request) {
       shippingCity: shipping.city,
       shippingState: shipping.state,
       shippingZip: shipping.zip,
-      paymentRef,
+      paymentProvider: "nowpayments",
       items: { create: lineItems },
     },
   });
 
-  return NextResponse.json({ orderId: order.id });
+  const origin = resolveOrigin(request);
+  try {
+    const invoice = await nowpayments.createInvoice({
+      orderId: order.id,
+      priceUsd: total / 100,
+      description: orderDescription,
+      successUrl: `${origin}/order/${order.id}?paid=1`,
+      cancelUrl: `${origin}/order/${order.id}`,
+      ipnCallbackUrl: `${origin}/api/webhooks/nowpayments`,
+    });
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: {
+        paymentRef: invoice.invoiceId,
+        paymentUrl: invoice.invoiceUrl,
+      },
+    });
+
+    return NextResponse.json({
+      orderId: order.id,
+      invoiceUrl: invoice.invoiceUrl,
+    });
+  } catch (err) {
+    // Couldn't open an invoice — mark the order failed and surface an error.
+    console.error("NOWPayments invoice creation failed:", err);
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { status: "failed" },
+    });
+    return NextResponse.json(
+      { error: "Could not start the crypto payment. Please try again." },
+      { status: 502 },
+    );
+  }
 }

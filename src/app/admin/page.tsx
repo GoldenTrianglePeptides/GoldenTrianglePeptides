@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
+import DeleteOrderButton from "./DeleteOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -65,29 +66,39 @@ export default async function AdminPage() {
                 <th className="p-3">Date</th>
                 <th className="p-3">Status</th>
                 <th className="p-3 text-right">Total</th>
+                <th className="p-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5">
-              {orders.map((o) => (
-                <tr key={o.id} className="hover:bg-zinc-50">
-                  <td className="p-3">
-                    <Link
-                      href={`/order/${o.id}`}
-                      className="font-mono text-navy hover:underline"
-                    >
-                      #{o.id.slice(-8).toUpperCase()}
-                    </Link>
-                  </td>
-                  <td className="p-3">{o.user.email}</td>
-                  <td className="p-3">{formatDate(o.createdAt)}</td>
-                  <td className="p-3 capitalize">
-                    {o.status.replace(/_/g, " ")}
-                  </td>
-                  <td className="p-3 text-right font-semibold">
-                    {formatPrice(o.totalCents)}
-                  </td>
-                </tr>
-              ))}
+              {orders.map((o) => {
+                const orderNumber = o.id.slice(-8).toUpperCase();
+                return (
+                  <tr key={o.id} className="hover:bg-zinc-50">
+                    <td className="p-3">
+                      <Link
+                        href={`/order/${o.id}`}
+                        className="font-mono text-navy hover:underline"
+                      >
+                        #{orderNumber}
+                      </Link>
+                    </td>
+                    <td className="p-3">{o.user.email}</td>
+                    <td className="p-3">{formatDate(o.createdAt)}</td>
+                    <td className="p-3 capitalize">
+                      {o.status.replace(/_/g, " ")}
+                    </td>
+                    <td className="p-3 text-right font-semibold">
+                      {formatPrice(o.totalCents)}
+                    </td>
+                    <td className="p-3 text-right">
+                      <DeleteOrderButton
+                        orderId={o.id}
+                        orderNumber={orderNumber}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

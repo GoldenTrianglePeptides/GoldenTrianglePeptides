@@ -1,13 +1,13 @@
 # Accepting Crypto Payments (NOWPayments)
 
-Your store can now take cryptocurrency at checkout. Customers pay on a secure
+Your store takes cryptocurrency at checkout. Customers pay on a secure
 NOWPayments page, and the coins are forwarded **straight to your own wallet** —
-NOWPayments never holds your money. This guide switches it on. About 15 minutes,
-no coding required.
+NOWPayments never holds your money. This guide is what you need to switch it
+on. About 15 minutes, no coding required.
 
-> Until you finish the steps below, the store stays in **demo mode** (orders are
-> recorded instantly without charging). Adding the keys in Step 5 flips it to
-> live crypto automatically.
+> Until you finish the steps below, checkout will refuse new orders with a
+> friendly "payments are temporarily unavailable" message rather than recording
+> unpaid orders.
 
 ## What you'll need
 

@@ -15,7 +15,7 @@ export default function CheckoutForm({
   userName: string;
   userEmail: string;
 }) {
-  const { items, subtotalCents, clear, ready } = useCart();
+  const { items, subtotalCents, ready } = useCart();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,16 +63,15 @@ export default function CheckoutForm({
         setSubmitting(false);
         return;
       }
-      // Crypto checkout: send the customer to the hosted payment page. Keep the
-      // cart intact until the order is confirmed paid (handled on the order
-      // page) so an abandoned payment doesn't lose their items.
-      if (data.invoiceUrl) {
-        window.location.href = data.invoiceUrl;
+      // Send the customer to the hosted crypto payment page. Keep the cart
+      // intact until the order is confirmed paid (handled on the order page)
+      // so an abandoned payment doesn't lose their items.
+      if (!data.invoiceUrl) {
+        setError("Could not start the payment. Please try again.");
+        setSubmitting(false);
         return;
       }
-      // Demo fallback (no processor configured): order is already recorded.
-      clear();
-      router.push(`/order/${data.orderId}`);
+      window.location.href = data.invoiceUrl;
     } catch {
       setError("Network error. Please try again.");
       setSubmitting(false);

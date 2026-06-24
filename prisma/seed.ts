@@ -292,18 +292,6 @@ async function main() {
     },
   });
   console.log(`Admin account ready: ${adminEmail}`);
-
-  // A demo customer for local development only — never created on the live site.
-  if (process.env.NODE_ENV !== "production") {
-    const demoEmail = "demo@goldentrianglepeptides.com";
-    const passwordHash = await bcrypt.hash("demo1234", 10);
-    await prisma.user.upsert({
-      where: { email: demoEmail },
-      update: {},
-      create: { email: demoEmail, name: "Demo Customer", passwordHash },
-    });
-    console.log(`Demo account ready: ${demoEmail} / demo1234`);
-  }
 }
 
 main()

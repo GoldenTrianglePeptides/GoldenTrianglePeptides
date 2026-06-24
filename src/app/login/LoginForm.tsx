@@ -98,11 +98,6 @@ export default function LoginForm() {
           Create one
         </Link>
       </p>
-
-      <div className="mt-6 rounded-lg bg-zinc-50 p-4 text-center text-xs text-zinc-500">
-        Demo account: <strong>demo@goldentrianglepeptides.com</strong> /{" "}
-        <strong>demo1234</strong>
-      </div>
     </div>
   );
 }
