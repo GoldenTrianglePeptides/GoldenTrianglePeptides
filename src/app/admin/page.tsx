@@ -80,7 +80,9 @@ export default async function AdminPage() {
                   </td>
                   <td className="p-3">{o.user.email}</td>
                   <td className="p-3">{formatDate(o.createdAt)}</td>
-                  <td className="p-3 capitalize">{o.status}</td>
+                  <td className="p-3 capitalize">
+                    {o.status.replace(/_/g, " ")}
+                  </td>
                   <td className="p-3 text-right font-semibold">
                     {formatPrice(o.totalCents)}
                   </td>

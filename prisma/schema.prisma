@@ -63,7 +63,10 @@ model Order {
   id              String      @id @default(cuid())
   user            User        @relation(fields: [userId], references: [id])
   userId          String
-  status          String      @default("paid") // paid, processing, shipped, delivered, cancelled
+  // Lifecycle: awaiting_payment (crypto invoice open) -> paid -> processing
+  // -> shipped -> delivered. Other states: partial, failed, expired, cancelled.
+  // Demo orders (no payment processor configured) are created as "paid".
+  status          String      @default("awaiting_payment")
   totalCents      Int
   shippingName    String
   shippingEmail   String
@@ -71,7 +74,11 @@ model Order {
   shippingCity    String
   shippingState   String
   shippingZip     String
-  paymentRef      String?
+  // Payment / processor tracking.
+  paymentRef      String? // processor invoice/payment id (or DEMO-xxx)
+  paymentProvider String? // e.g. "nowpayments"; null for demo orders
+  paymentStatus   String? // raw provider status: waiting, confirming, confirmed, finished, partially_paid, failed, expired
+  paymentUrl      String? // hosted checkout URL so a pending order can be reopened
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 }

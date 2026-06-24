@@ -63,6 +63,14 @@ export default function CheckoutForm({
         setSubmitting(false);
         return;
       }
+      // Crypto checkout: send the customer to the hosted payment page. Keep the
+      // cart intact until the order is confirmed paid (handled on the order
+      // page) so an abandoned payment doesn't lose their items.
+      if (data.invoiceUrl) {
+        window.location.href = data.invoiceUrl;
+        return;
+      }
+      // Demo fallback (no processor configured): order is already recorded.
       clear();
       router.push(`/order/${data.orderId}`);
     } catch {
@@ -156,12 +164,17 @@ export default function CheckoutForm({
             <h2 className="mb-4 font-serif text-xl font-bold text-navy">
               Payment
             </h2>
-            <p className="rounded-lg bg-zinc-50 p-4 text-sm text-zinc-600">
-              This store is running in <strong>demo payment mode</strong>, so no
-              card is charged and your order is recorded immediately. A real
-              payment processor (such as Stripe) can be connected to take live
-              payments.
-            </p>
+            <div className="rounded-lg bg-zinc-50 p-4 text-sm text-zinc-600">
+              <p className="flex items-center gap-2 font-semibold text-navy">
+                <span aria-hidden>₿</span> Pay with cryptocurrency
+              </p>
+              <p className="mt-2">
+                When you place your order you&apos;ll be taken to a secure
+                payment page to pay with Bitcoin, Ethereum, USDT and other
+                coins. Your order is confirmed automatically as soon as the
+                payment is received on the blockchain.
+              </p>
+            </div>
           </section>
         </div>
 
@@ -209,7 +222,9 @@ export default function CheckoutForm({
             disabled={submitting}
             className="mt-6 w-full rounded-lg bg-gold px-6 py-3 font-semibold text-navy-dark transition hover:bg-gold-light disabled:opacity-60"
           >
-            {submitting ? "Placing order…" : `Place Order · ${formatPrice(total)}`}
+            {submitting
+              ? "Starting payment…"
+              : `Pay with Crypto · ${formatPrice(total)}`}
           </button>
           <Link
             href="/cart"

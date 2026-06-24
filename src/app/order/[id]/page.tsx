@@ -3,10 +3,18 @@ import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
+import OrderStatusWatcher from "./OrderStatusWatcher";
 
 export const dynamic = "force-dynamic";
 
 const SHIPPING_FLAT_CENTS = 1000;
+
+const PAID_STATUSES = ["paid", "processing", "shipped", "delivered"];
+const FAILED_STATUSES = ["failed", "expired", "cancelled"];
+
+function humanizeStatus(status: string): string {
+  return status.replace(/_/g, " ");
+}
 
 export default async function OrderPage({
   params,
@@ -32,19 +40,75 @@ export default async function OrderPage({
     0,
   );
 
+  const isPaid = PAID_STATUSES.includes(order.status);
+  const isFailed = FAILED_STATUSES.includes(order.status);
+  // Anything not paid or failed is still in flight (awaiting_payment, partial).
+  const isPending = !isPaid && !isFailed;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
-        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-2xl text-white">
-          ✓
+      <OrderStatusWatcher status={order.status} />
+
+      {isPaid && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-green-600 text-2xl text-white">
+            ✓
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-navy">
+            Thank you for your order!
+          </h1>
+          <p className="mt-1 text-zinc-600">
+            A confirmation has been sent to {order.shippingEmail}.
+          </p>
         </div>
-        <h1 className="font-serif text-2xl font-bold text-navy">
-          Thank you for your order!
-        </h1>
-        <p className="mt-1 text-zinc-600">
-          A confirmation has been sent to {order.shippingEmail}.
-        </p>
-      </div>
+      )}
+
+      {isPending && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500 text-2xl text-white">
+            ₿
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-navy">
+            {order.status === "partial"
+              ? "Partial payment received"
+              : "Waiting for your payment"}
+          </h1>
+          <p className="mt-1 text-zinc-600">
+            {order.status === "partial"
+              ? "We received part of the amount. Please send the remaining balance to complete your order."
+              : "Complete your payment on the secure checkout page. This page updates automatically once the blockchain confirms it."}
+          </p>
+          {order.paymentUrl && (
+            <a
+              href={order.paymentUrl}
+              className="mt-4 inline-block rounded-lg bg-amber-500 px-6 py-3 font-semibold text-white hover:bg-amber-600"
+            >
+              Complete Payment
+            </a>
+          )}
+        </div>
+      )}
+
+      {isFailed && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-2xl text-white">
+            !
+          </div>
+          <h1 className="font-serif text-2xl font-bold text-navy">
+            Payment not completed
+          </h1>
+          <p className="mt-1 text-zinc-600">
+            This order&apos;s payment wasn&apos;t completed. You can place a new
+            order to try again.
+          </p>
+          <Link
+            href="/products"
+            className="mt-4 inline-block rounded-lg bg-navy px-6 py-3 font-semibold text-white hover:bg-navy-dark"
+          >
+            Return to Shop
+          </Link>
+        </div>
+      )}
 
       <div className="mt-6 rounded-xl border border-black/10 bg-white p-6">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/10 pb-4">
@@ -57,7 +121,7 @@ export default async function OrderPage({
             </p>
           </div>
           <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold capitalize text-blue-800">
-            {order.status}
+            {humanizeStatus(order.status)}
           </span>
         </div>
 

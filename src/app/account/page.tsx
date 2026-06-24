@@ -11,11 +11,15 @@ export const metadata = {
 };
 
 const statusStyles: Record<string, string> = {
+  awaiting_payment: "bg-amber-100 text-amber-800",
+  partial: "bg-amber-100 text-amber-800",
   paid: "bg-blue-100 text-blue-800",
   processing: "bg-amber-100 text-amber-800",
   shipped: "bg-purple-100 text-purple-800",
   delivered: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
+  failed: "bg-red-100 text-red-800",
+  expired: "bg-red-100 text-red-800",
 };
 
 export default async function AccountPage() {
@@ -74,7 +78,7 @@ export default async function AccountPage() {
                       statusStyles[order.status] ?? "bg-zinc-100 text-zinc-700"
                     }`}
                   >
-                    {order.status}
+                    {order.status.replace(/_/g, " ")}
                   </span>
                   <span className="font-bold text-navy">
                     {formatPrice(order.totalCents)}
