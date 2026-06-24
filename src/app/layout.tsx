@@ -6,6 +6,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getCurrentUser } from "@/lib/auth";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default async function RootLayout({
             <Footer />
           </CartProvider>
         </AuthProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
