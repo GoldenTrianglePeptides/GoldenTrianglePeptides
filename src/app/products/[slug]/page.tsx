@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
+import { siteUrl } from "@/lib/site";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
 
@@ -16,9 +17,18 @@ export async function generateMetadata({
   const { slug } = await params;
   const product = await prisma.product.findUnique({ where: { slug } });
   if (!product) return { title: "Product Not Found" };
+  const title = `${product.name} | Golden Triangle Peptides`;
   return {
-    title: `${product.name} | Golden Triangle Peptides`,
+    title,
     description: product.description,
+    alternates: { canonical: `/products/${product.slug}` },
+    openGraph: {
+      type: "website",
+      title,
+      description: product.description,
+      url: `/products/${product.slug}`,
+      images: [{ url: product.imageUrl, alt: product.name }],
+    },
   };
 }
 
@@ -66,8 +76,36 @@ export default async function ProductPage({
       ? formatPrice(minPrice)
       : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`;
 
+  const inStock = variants.some((v) => v.inStock);
+  // Product structured data so the listing can appear as a Google rich result.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    image: new URL(product.imageUrl, siteUrl()).toString(),
+    category: product.category,
+    brand: { "@type": "Brand", name: "Golden Triangle Peptides" },
+    ...(product.cas ? { productID: `CAS:${product.cas}` } : {}),
+    offers: {
+      "@type": "AggregateOffer",
+      priceCurrency: "USD",
+      lowPrice: (minPrice / 100).toFixed(2),
+      highPrice: (maxPrice / 100).toFixed(2),
+      offerCount: variants.length,
+      availability: inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      url: `${siteUrl()}/products/${product.slug}`,
+    },
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <nav className="mb-6 text-sm text-zinc-500">
         <Link href="/" className="hover:text-navy">
           Home

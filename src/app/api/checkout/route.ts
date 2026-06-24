@@ -98,6 +98,15 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
+      // Enforce tracked inventory so we never sell more than we have.
+      if (variant.stockQty !== null && variant.stockQty < item.quantity) {
+        return NextResponse.json(
+          {
+            error: `${variant.product.name} (${variant.label}) — only ${variant.stockQty} left in stock`,
+          },
+          { status: 400 },
+        );
+      }
       lineItems.push({
         productId: variant.productId,
         variantId: variant.id,

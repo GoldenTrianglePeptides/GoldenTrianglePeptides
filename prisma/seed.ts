@@ -281,9 +281,12 @@ async function main() {
     );
   }
   const adminHash = await bcrypt.hash(adminPassword, 10);
+  // Ensure the admin exists and has admin rights, but never overwrite an
+  // existing password — otherwise re-seeding would undo a password the admin
+  // set themselves (e.g. via the reset-password flow).
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: { isAdmin: true, passwordHash: adminHash },
+    update: { isAdmin: true },
     create: {
       email: adminEmail,
       name: "Store Admin",

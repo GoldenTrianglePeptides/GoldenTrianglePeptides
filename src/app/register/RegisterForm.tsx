@@ -11,7 +11,13 @@ export default function RegisterForm() {
   const next = params.get("next") || "/account";
   const { refresh } = useAuth();
 
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  // `website` is a honeypot — hidden from users, often auto-filled by bots.
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    website: "",
+  });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -63,6 +69,20 @@ export default function RegisterForm() {
         onSubmit={handleSubmit}
         className="mt-8 space-y-4 rounded-xl border border-black/10 bg-white p-6"
       >
+        {/* Honeypot: hidden from people, tempting to bots. Real users leave it empty. */}
+        <div className="hidden" aria-hidden="true">
+          <label>
+            Website
+            <input
+              type="text"
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.website}
+              onChange={(e) => update("website", e.target.value)}
+            />
+          </label>
+        </div>
+
         <label className="block text-sm">
           Full name
           <input

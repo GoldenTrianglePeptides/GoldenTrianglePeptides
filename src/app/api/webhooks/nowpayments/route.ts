@@ -125,15 +125,38 @@ export async function POST(request: Request) {
     },
   });
 
-  // Send the order receipt the moment the order is confirmed paid. Email
-  // failures are logged but never fail the webhook — NOWPayments retries on
-  // non-2xx, and we don't want a transient email outage to keep flipping the
-  // order back to pending.
+  // When an order is confirmed paid, decrement tracked inventory and email the
+  // receipt. This only runs on the transition to paid (a repeat "finished"
+  // webhook hits the SETTLED_PAID short-circuit above), so stock isn't
+  // double-decremented. Failures are logged but never fail the webhook.
   if (nextStatus === "paid") {
+    const items = await prisma.orderItem.findMany({
+      where: { orderId: order.id },
+    });
+
+    // Decrement tracked stock; flip a variant out of stock when it hits zero.
     try {
-      const items = await prisma.orderItem.findMany({
-        where: { orderId: order.id },
-      });
+      for (const item of items) {
+        if (!item.variantId) continue;
+        const variant = await prisma.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { stockQty: true },
+        });
+        if (!variant || variant.stockQty === null) continue; // untracked
+        const remaining = Math.max(0, variant.stockQty - item.quantity);
+        await prisma.productVariant.update({
+          where: { id: item.variantId },
+          data: {
+            stockQty: remaining,
+            ...(remaining === 0 ? { inStock: false } : {}),
+          },
+        });
+      }
+    } catch (err) {
+      console.error("[webhook] Failed to decrement stock:", err);
+    }
+
+    try {
       const subtotalCents = items.reduce(
         (sum, i) => sum + i.priceCents * i.quantity,
         0,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { createSession, verifyPassword } from "@/lib/auth";
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rateLimit";
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email"),
@@ -9,6 +10,10 @@ const schema = z.object({
 });
 
 export async function POST(request: Request) {
+  // Throttle login attempts per IP to slow brute-force guessing.
+  const rl = rateLimit(`login:${clientIp(request)}`, 10, 5 * 60_000);
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
+
   let body: unknown;
   try {
     body = await request.json();

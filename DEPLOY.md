@@ -25,9 +25,24 @@ In **Settings → Environment Variables**, add:
 | `ADMIN_PASSWORD` | a strong password for the admin account                          |
 
 ## 5. Deploy
-Trigger a deploy (Deployments → Redeploy, or push a commit). The build
-automatically creates the database tables, loads the product catalog, and
-creates your admin account.
+Trigger a deploy (Deployments → Redeploy, or push a commit). The build runs
+`prisma db push`, which **creates or updates the database tables without
+destroying existing data** (a deploy that would require a destructive schema
+change fails loudly instead of dropping data — handle those deliberately).
+
+> The build no longer re-seeds on every deploy, so it can't overwrite your
+> catalog, undo product deletions, or reset the admin password.
+
+### First-time only: load the starter catalog + admin
+On a brand-new database, seed the baseline products and admin account **once**
+by running the seed against the production database:
+
+```bash
+# with the production DATABASE_URL available in your shell
+npm run db:seed
+```
+
+(You can also manage everything from the **/admin** dashboard instead.)
 
 ## 6. Go live
 - Visit your `*.vercel.app` URL.
@@ -37,5 +52,9 @@ creates your admin account.
 
 ## Managing the catalog
 Once live, manage products in the **Admin dashboard** — changes save to the
-live database instantly. The seed file only provides the initial baseline and
-never overwrites your dashboard changes.
+live database instantly and are never overwritten by deploys.
+
+## Later: adopt migrations
+For full safety as the schema evolves, switch from `prisma db push` to
+versioned migrations (`prisma migrate deploy`). This is a one-time setup that
+baselines the existing database — do it when you have direct database access.

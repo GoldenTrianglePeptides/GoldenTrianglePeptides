@@ -184,6 +184,16 @@ const VariantInput = z.object({
   label: z.string().trim().min(1),
   sizeMg: z.coerce.number().int().min(0),
   price: z.coerce.number().min(0),
+  // Blank = untracked (unlimited). A number = tracked stock count.
+  stock: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v) => {
+      if (!v) return null;
+      const n = Math.floor(Number(v));
+      return Number.isFinite(n) && n >= 0 ? n : null;
+    }),
 });
 
 export async function addVariant(productId: string, formData: FormData) {
@@ -192,6 +202,7 @@ export async function addVariant(productId: string, formData: FormData) {
     label: formData.get("label"),
     sizeMg: formData.get("sizeMg"),
     price: formData.get("price"),
+    stock: formData.get("stock") ?? undefined,
   });
   if (!parsed.success) {
     redirect(
@@ -211,6 +222,9 @@ export async function addVariant(productId: string, formData: FormData) {
       label: d.label,
       sizeMg: d.sizeMg,
       priceCents: Math.round(d.price * 100),
+      stockQty: d.stock,
+      // A size added with 0 stock starts out of stock.
+      inStock: d.stock !== 0,
       sortOrder: (max._max.sortOrder ?? -1) + 1,
     },
   });
@@ -231,6 +245,7 @@ export async function updateVariant(variantId: string, formData: FormData) {
     label: formData.get("label"),
     sizeMg: formData.get("sizeMg"),
     price: formData.get("price"),
+    stock: formData.get("stock") ?? undefined,
   });
   if (!parsed.success) {
     redirect(
@@ -246,6 +261,10 @@ export async function updateVariant(variantId: string, formData: FormData) {
       label: d.label,
       sizeMg: d.sizeMg,
       priceCents: Math.round(d.price * 100),
+      stockQty: d.stock,
+      // When stock is tracked, availability follows the count; untracked
+      // stock leaves the in/out-of-stock toggle as the admin set it.
+      ...(d.stock !== null ? { inStock: d.stock > 0 } : {}),
     },
   });
   refreshStorefront();

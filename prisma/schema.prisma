@@ -68,6 +68,9 @@ model ProductVariant {
   sizeMg     Int // numeric size for sorting & display; 0 = non-peptide (e.g. liquid)
   priceCents Int
   inStock    Boolean     @default(true)
+  // Units in stock. null = not tracked (treated as unlimited); a number is
+  // enforced at checkout and decremented when an order is paid.
+  stockQty   Int?
   sortOrder  Int         @default(0)
   createdAt  DateTime    @default(now())
   orderItems OrderItem[]

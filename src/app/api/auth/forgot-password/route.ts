@@ -6,6 +6,7 @@ import {
   RESET_TOKEN_TTL_MINUTES,
 } from "@/lib/passwordReset";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,6 +27,10 @@ function resolveOrigin(request: Request): string {
  * this endpoint to enumerate registered emails.
  */
 export async function POST(request: Request) {
+  // Throttle reset requests per IP to prevent email-spamming a victim.
+  const rl = rateLimit(`forgot:${clientIp(request)}`, 5, 30 * 60_000);
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
+
   let body: unknown;
   try {
     body = await request.json();

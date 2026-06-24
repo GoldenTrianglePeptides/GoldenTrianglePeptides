@@ -6,6 +6,7 @@ import {
   findValidResetToken,
   consumeResetToken,
 } from "@/lib/passwordReset";
+import { rateLimit, clientIp, tooManyRequests } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,10 @@ const schema = z.object({
  * password again.
  */
 export async function POST(request: Request) {
+  // Throttle token redemption attempts per IP.
+  const rl = rateLimit(`reset:${clientIp(request)}`, 10, 30 * 60_000);
+  if (!rl.ok) return tooManyRequests(rl.retryAfterSec);
+
   let body: unknown;
   try {
     body = await request.json();
