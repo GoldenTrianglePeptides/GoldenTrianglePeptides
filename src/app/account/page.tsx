@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
+import CancelOrderButton from "@/components/CancelOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -58,37 +59,46 @@ export default async function AccountPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
-            <Link
+            <div
               key={order.id}
-              href={`/order/${order.id}`}
-              className="block rounded-xl border border-black/10 bg-white p-5 transition hover:shadow-md"
+              className="overflow-hidden rounded-xl border border-black/10 bg-white transition hover:shadow-md"
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <p className="font-mono text-sm text-zinc-500">
-                    Order #{order.id.slice(-8).toUpperCase()}
-                  </p>
-                  <p className="text-sm text-zinc-500">
-                    {formatDate(order.createdAt)}
-                  </p>
+              <Link href={`/order/${order.id}`} className="block p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-mono text-sm text-zinc-500">
+                      Order #{order.id.slice(-8).toUpperCase()}
+                    </p>
+                    <p className="text-sm text-zinc-500">
+                      {formatDate(order.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                        statusStyles[order.status] ?? "bg-zinc-100 text-zinc-700"
+                      }`}
+                    >
+                      {order.status.replace(/_/g, " ")}
+                    </span>
+                    <span className="font-bold text-navy">
+                      {formatPrice(order.totalCents)}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
-                      statusStyles[order.status] ?? "bg-zinc-100 text-zinc-700"
-                    }`}
-                  >
-                    {order.status.replace(/_/g, " ")}
+                <p className="mt-2 text-sm text-zinc-600">
+                  {order.items.map((i) => `${i.name} ×${i.quantity}`).join(", ")}
+                </p>
+              </Link>
+              {order.status === "awaiting_payment" && (
+                <div className="flex items-center justify-between gap-3 border-t border-black/10 px-5 py-3">
+                  <span className="text-xs text-zinc-500">
+                    Payment not completed yet
                   </span>
-                  <span className="font-bold text-navy">
-                    {formatPrice(order.totalCents)}
-                  </span>
+                  <CancelOrderButton orderId={order.id} />
                 </div>
-              </div>
-              <p className="mt-2 text-sm text-zinc-600">
-                {order.items.map((i) => `${i.name} ×${i.quantity}`).join(", ")}
-              </p>
-            </Link>
+              )}
+            </div>
           ))}
         </div>
       )}

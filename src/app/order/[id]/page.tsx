@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { formatPrice, formatDate, carrierTrackingUrl } from "@/lib/format";
 import OrderStatusWatcher from "./OrderStatusWatcher";
 import AdminShippingControls from "./AdminShippingControls";
+import CancelOrderButton from "@/components/CancelOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,15 @@ export default async function OrderPage({
             >
               Complete Payment
             </a>
+          )}
+          {order.status === "awaiting_payment" && (
+            <div className="mt-4">
+              <CancelOrderButton
+                orderId={order.id}
+                label="Cancel this order"
+                className="text-sm font-semibold text-red-700 underline underline-offset-2 hover:text-red-800"
+              />
+            </div>
           )}
         </div>
       )}

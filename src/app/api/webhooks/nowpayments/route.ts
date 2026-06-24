@@ -21,14 +21,15 @@ export const runtime = "nodejs";
 // Never cache a webhook.
 export const dynamic = "force-dynamic";
 
-// Statuses we treat as final — once an order reaches one of these we don't let
-// a later (possibly out-of-order) webhook move it backwards.
-const TERMINAL_STATUSES = new Set([
+// Once an order is paid or being fulfilled, a later (possibly out-of-order)
+// webhook must never move it backwards. Note "cancelled" is deliberately NOT
+// here: a genuinely completed payment can still settle a cancelled order
+// (money received always wins) — see the logic below.
+const SETTLED_PAID_STATUSES = new Set([
   "paid",
   "processing",
   "shipped",
   "delivered",
-  "cancelled",
 ]);
 
 /**
@@ -76,29 +77,43 @@ export async function POST(request: Request) {
     return new Response("Order not found", { status: 200 });
   }
 
-  // Already in a terminal state: just record the latest raw status and stop.
-  if (TERMINAL_STATUSES.has(order.status)) {
+  // Already paid / being fulfilled: never move it backward, just record the
+  // latest raw status and stop.
+  if (SETTLED_PAID_STATUSES.has(order.status)) {
     await prisma.order.update({
       where: { id: order.id },
       data: { paymentStatus },
     });
-    return new Response("Already final", { status: 200 });
+    return new Response("Already paid", { status: 200 });
   }
 
   const nextStatus = mapPaymentStatusToOrderStatus(paymentStatus);
 
-  // Defense in depth: only mark paid if the invoice's USD amount matches the
-  // order total. The signature already authenticates the payload, but this
-  // guards against an order being settled for the wrong amount.
-  if (nextStatus === "paid" && typeof payload.price_amount === "number") {
-    const expectedUsd = order.totalCents / 100;
-    if (Math.abs(payload.price_amount - expectedUsd) > 0.01) {
-      await prisma.order.update({
-        where: { id: order.id },
-        data: { status: "partial", paymentStatus },
-      });
-      return new Response("Amount mismatch", { status: 200 });
+  if (nextStatus === "paid") {
+    // Defense in depth: only mark paid if the invoice's USD amount matches the
+    // order total. The signature already authenticates the payload, but this
+    // guards against an order being settled for the wrong amount.
+    if (typeof payload.price_amount === "number") {
+      const expectedUsd = order.totalCents / 100;
+      if (Math.abs(payload.price_amount - expectedUsd) > 0.01) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: "partial", paymentStatus },
+        });
+        return new Response("Amount mismatch", { status: 200 });
+      }
     }
+    // A completed, correct payment settles the order even if the customer had
+    // cancelled it or it had expired — money received wins. Falls through to
+    // the paid update below.
+  } else if (order.status === "cancelled") {
+    // Don't resurrect a cancelled order from a non-payment ping (waiting,
+    // expired, etc.). Only a completed payment (handled above) can revive it.
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentStatus },
+    });
+    return new Response("Stays cancelled", { status: 200 });
   }
 
   await prisma.order.update({
