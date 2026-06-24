@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
         {
           heading: "Contact",
           body: [
-            "Questions about this policy can be sent to support@goldentrianglepeptides.com.",
+            "Questions about this policy can be sent to support@goldentrianglepeptide.com.",
           ],
         },
       ]}

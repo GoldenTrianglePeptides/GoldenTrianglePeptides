@@ -48,10 +48,10 @@ export default function Header() {
           <div className="flex items-center gap-5">
             <div className="hidden text-right text-xs leading-tight text-navy/70 lg:block">
               <a
-                href="mailto:support@goldentrianglepeptides.com"
+                href="mailto:support@goldentrianglepeptide.com"
                 className="block font-medium text-navy hover:text-gold"
               >
-                support@goldentrianglepeptides.com
+                support@goldentrianglepeptide.com
               </a>
               <span>Mon–Fri · 9am–5pm CT</span>
             </div>

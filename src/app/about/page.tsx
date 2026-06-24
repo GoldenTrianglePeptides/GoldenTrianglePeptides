@@ -53,10 +53,10 @@ export default function AboutPage() {
             <p className="mt-2 text-sm">
               Questions about an order or a product? Reach our team at{" "}
               <a
-                href="mailto:support@goldentrianglepeptides.com"
+                href="mailto:support@goldentrianglepeptide.com"
                 className="font-semibold text-gold hover:underline"
               >
-                support@goldentrianglepeptides.com
+                support@goldentrianglepeptide.com
               </a>
               .
             </p>

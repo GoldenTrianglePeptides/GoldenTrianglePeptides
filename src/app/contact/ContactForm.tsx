@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-const SUPPORT_EMAIL = "support@goldentrianglepeptides.com";
+const SUPPORT_EMAIL = "support@goldentrianglepeptide.com";
 
 export default function ContactForm() {
   const [sent, setSent] = useState(false);

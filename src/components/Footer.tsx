@@ -28,10 +28,10 @@ export default function Footer() {
             For research use only. Not for human or veterinary use.
           </p>
           <a
-            href="mailto:support@goldentrianglepeptides.com"
+            href="mailto:support@goldentrianglepeptide.com"
             className="mt-4 block text-sm text-white/80 hover:text-gold-light"
           >
-            support@goldentrianglepeptides.com
+            support@goldentrianglepeptide.com
           </a>
           <p className="text-sm text-white/60">Mon–Fri · 9am–5pm CT</p>
         </div>

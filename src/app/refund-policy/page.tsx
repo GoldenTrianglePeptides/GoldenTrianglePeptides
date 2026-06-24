@@ -29,7 +29,7 @@ export default function RefundPolicyPage() {
         {
           heading: "Contact",
           body: [
-            "To start a request, email support@goldentrianglepeptides.com with your order number.",
+            "To start a request, email support@goldentrianglepeptide.com with your order number.",
           ],
         },
       ]}

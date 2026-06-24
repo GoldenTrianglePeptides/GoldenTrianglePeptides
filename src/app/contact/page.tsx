@@ -9,9 +9,9 @@ export const metadata = {
 const INFO = [
   {
     label: "Email",
-    value: "support@goldentrianglepeptides.com",
+    value: "support@goldentrianglepeptide.com",
     note: "Best for certification requests and detailed order questions.",
-    href: "mailto:support@goldentrianglepeptides.com",
+    href: "mailto:support@goldentrianglepeptide.com",
   },
   {
     label: "Hours",
