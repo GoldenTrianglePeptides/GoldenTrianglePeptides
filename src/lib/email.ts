@@ -367,3 +367,72 @@ export async function sendShippingNotification(
     );
   }
 }
+
+// --- Abandoned-payment reminder ---------------------------------------------
+
+export type AbandonedPaymentInput = {
+  to: string;
+  customerName: string;
+  orderNumber: string;
+  totalCents: number;
+  /** Link back to the order page where the customer can resume payment. */
+  orderUrl: string;
+};
+
+export async function sendAbandonedPaymentReminder(
+  input: AbandonedPaymentInput,
+): Promise<void> {
+  const c = client();
+  if (!c) {
+    console.warn(
+      `[email] RESEND_API_KEY not set — skipping abandoned-payment reminder for order ${input.orderNumber}`,
+    );
+    return;
+  }
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#0a1e3f;">Your order is waiting</h1>
+    <p style="margin:0 0 4px;color:#27272a;">Hi ${escapeHtml(input.customerName)},</p>
+    <p style="margin:0 0 16px;color:#52525b;">
+      You started an order with us but the payment hasn't come through yet.
+      Pick it back up below — the total is
+      <strong>${formatPriceCents(input.totalCents)}</strong>.
+    </p>
+    <div style="margin:24px 0;">
+      <a href="${input.orderUrl}" style="background:#d4af37;color:#0a1e3f;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px;display:inline-block;">Complete Your Order</a>
+    </div>
+    <p style="margin:24px 0 0;color:#71717a;font-size:13px;">
+      If the original payment link has expired, just place the order again from
+      your cart. No charge has been made.
+    </p>
+  `;
+
+  const text = [
+    `Your order is waiting`,
+    ``,
+    `Hi ${input.customerName},`,
+    `You started order #${input.orderNumber} but the payment hasn't come through yet. Total: ${formatPriceCents(input.totalCents)}.`,
+    ``,
+    `Complete your order: ${input.orderUrl}`,
+    ``,
+    `If the original payment link has expired, just place the order again from your cart. No charge has been made.`,
+  ].join("\n");
+
+  try {
+    await c.emails.send({
+      from: sender(),
+      to: input.to,
+      subject: `Your order #${input.orderNumber} is waiting — ${BRAND_NAME}`,
+      html: renderShell({
+        preheader: `Finish your ${formatPriceCents(input.totalCents)} order — payment hasn't come through yet.`,
+        body,
+      }),
+      text,
+    });
+  } catch (err) {
+    console.error(
+      `[email] Failed to send abandoned-payment reminder for order ${input.orderNumber}:`,
+      err,
+    );
+  }
+}

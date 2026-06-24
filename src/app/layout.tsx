@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { CartProvider } from "@/components/CartProvider";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -55,6 +56,7 @@ export default async function RootLayout({
             <Footer />
           </CartProvider>
         </AuthProvider>
+        <Analytics />
       </body>
     </html>
   );
