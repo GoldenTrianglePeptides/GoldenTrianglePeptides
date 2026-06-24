@@ -2,6 +2,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/format";
 
+type Variant = {
+  label: string;
+  sizeMg: number;
+  priceCents: number;
+  inStock: boolean;
+};
+
 type ProductCardProps = {
   product: {
     slug: string;
@@ -13,6 +20,7 @@ type ProductCardProps = {
     purity: string;
     imageUrl: string;
     inStock: boolean;
+    variants?: Variant[];
   };
 };
 
@@ -28,6 +36,34 @@ function Tag({ children }: { children: React.ReactNode }) {
 export default function ProductCard({ product }: ProductCardProps) {
   const href = `/products/${product.slug}`;
 
+  // Resolve display from variants when present, falling back to legacy fields.
+  const variants =
+    product.variants && product.variants.length > 0
+      ? product.variants
+      : [
+          {
+            label: product.sizeMg > 0 ? `${product.sizeMg} mg` : "Default",
+            sizeMg: product.sizeMg,
+            priceCents: product.priceCents,
+            inStock: product.inStock,
+          },
+        ];
+
+  const minPrice = Math.min(...variants.map((v) => v.priceCents));
+  const maxPrice = Math.max(...variants.map((v) => v.priceCents));
+  const priceLabel =
+    minPrice === maxPrice
+      ? formatPrice(minPrice)
+      : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`;
+
+  // Pick the front-facing size to feature in the spec sheet (smallest).
+  const featuredVariant = variants[0];
+  const sizeDisplay =
+    featuredVariant.sizeMg > 0
+      ? `${featuredVariant.sizeMg} mg`
+      : featuredVariant.label;
+  const anyInStock = product.inStock && variants.some((v) => v.inStock);
+
   return (
     <div className="group flex flex-col">
       {/* Spec-sheet "label" card with the vial photo overlapping the right edge */}
@@ -35,7 +71,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         href={href}
         className="relative flex min-h-[320px] flex-col overflow-hidden rounded-xl border border-black/10 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
       >
-        {!product.inStock && (
+        {!anyInStock && (
           <span className="absolute right-3 top-3 z-10 rounded bg-navy px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-gold-light">
             Out of stock
           </span>
@@ -45,8 +81,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center gap-2">
           <Image src="/logo-mark.png" alt="" width={26} height={26} />
           <span className="text-[0.6rem] font-bold uppercase leading-none tracking-[0.15em] text-navy">
-            Golden Triangle{" "}
-            <span className="text-gold">Peptides</span>
+            Golden Triangle <span className="text-gold">Peptides</span>
           </span>
         </div>
 
@@ -63,11 +98,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.name}
           </h3>
 
-          <p className="mt-3 text-lg font-bold text-navy">
-            {product.sizeMg > 0 ? `${product.sizeMg} mg` : "10 mL"}
-          </p>
+          <p className="mt-3 text-lg font-bold text-navy">{sizeDisplay}</p>
           <p className="text-xs text-zinc-500">
-            {product.sizeMg > 0 ? "Lyophilized vial" : "Sterile solution"}
+            {variants.length > 1
+              ? `${variants.length} sizes available`
+              : product.sizeMg > 0
+                ? "Lyophilized vial"
+                : "Sterile solution"}
           </p>
 
           <div className="mt-auto space-y-1.5 pt-4 text-sm">
@@ -101,11 +138,8 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       {/* Meta + call to action, below the card (matches the reference layout) */}
       <div className="mt-3">
-        <p className="text-sm font-medium text-navy">
-          {product.name}
-          {product.sizeMg > 0 ? ` (${product.sizeMg}mg vial)` : ""}
-        </p>
-        <p className="text-sm text-zinc-500">{formatPrice(product.priceCents)}</p>
+        <p className="text-sm font-medium text-navy">{product.name}</p>
+        <p className="text-sm text-zinc-500">{priceLabel}</p>
       </div>
       <Link
         href={href}

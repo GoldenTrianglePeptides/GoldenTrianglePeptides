@@ -28,13 +28,43 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug } });
+  const product = await prisma.product.findUnique({
+    where: { slug },
+    include: { variants: { orderBy: [{ sortOrder: "asc" }, { sizeMg: "asc" }] } },
+  });
   if (!product) notFound();
 
   const related = await prisma.product.findMany({
     where: { category: product.category, NOT: { id: product.id } },
+    include: { variants: { orderBy: [{ sortOrder: "asc" }, { sizeMg: "asc" }] } },
     take: 3,
   });
+
+  // If a product has no variants in the database, treat the legacy
+  // priceCents/sizeMg as a single implicit variant so the picker still works.
+  const variants =
+    product.variants.length > 0
+      ? product.variants.map((v) => ({
+          id: v.id,
+          label: v.label,
+          priceCents: v.priceCents,
+          inStock: product.inStock && v.inStock,
+        }))
+      : [
+          {
+            id: product.id, // legacy fallback id
+            label: product.sizeMg > 0 ? `${product.sizeMg} mg` : "Default",
+            priceCents: product.priceCents,
+            inStock: product.inStock,
+          },
+        ];
+
+  const minPrice = Math.min(...variants.map((v) => v.priceCents));
+  const maxPrice = Math.max(...variants.map((v) => v.priceCents));
+  const priceLabel =
+    minPrice === maxPrice
+      ? formatPrice(minPrice)
+      : `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -102,17 +132,9 @@ export default async function ProductPage({
               <span className="font-semibold text-navy">{product.cas}</span>
             </p>
           )}
-          <p className="mt-4 text-3xl font-bold text-navy">
-            {formatPrice(product.priceCents)}
-          </p>
+          <p className="mt-4 text-3xl font-bold text-navy">{priceLabel}</p>
 
           <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
-            {product.sizeMg > 0 && (
-              <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
-                <dt className="text-zinc-500">Size</dt>
-                <dd className="font-semibold text-navy">{product.sizeMg} mg</dd>
-              </div>
-            )}
             <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
               <dt className="text-zinc-500">Purity</dt>
               <dd className="font-semibold text-navy">{product.purity}</dd>
@@ -124,13 +146,21 @@ export default async function ProductPage({
               </dd>
             </div>
             <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
+              <dt className="text-zinc-500">Sizes</dt>
+              <dd className="font-semibold text-navy">
+                {variants.map((v) => v.label).join(" · ")}
+              </dd>
+            </div>
+            <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
               <dt className="text-zinc-500">Availability</dt>
               <dd
                 className={`font-semibold ${
-                  product.inStock ? "text-green-600" : "text-red-600"
+                  variants.some((v) => v.inStock)
+                    ? "text-green-600"
+                    : "text-red-600"
                 }`}
               >
-                {product.inStock ? "In stock" : "Out of stock"}
+                {variants.some((v) => v.inStock) ? "In stock" : "Out of stock"}
               </dd>
             </div>
           </dl>
@@ -142,14 +172,12 @@ export default async function ProductPage({
           <div className="mt-8">
             <AddToCartButton
               product={{
-                productId: product.id,
+                id: product.id,
                 slug: product.slug,
                 name: product.name,
-                priceCents: product.priceCents,
                 imageUrl: product.imageUrl,
-                sizeMg: product.sizeMg,
               }}
-              disabled={!product.inStock}
+              variants={variants}
             />
           </div>
 

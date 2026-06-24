@@ -51,7 +51,7 @@ export default function CheckoutForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           items: items.map((i) => ({
-            productId: i.productId,
+            variantId: i.variantId,
             quantity: i.quantity,
           })),
           shipping: form,
@@ -172,9 +172,9 @@ export default function CheckoutForm({
           </h2>
           <ul className="space-y-2 text-sm">
             {items.map((i) => (
-              <li key={i.productId} className="flex justify-between">
+              <li key={i.variantId} className="flex justify-between">
                 <span className="text-zinc-600">
-                  {i.name} × {i.quantity}
+                  {i.name} ({i.variantLabel}) × {i.quantity}
                 </span>
                 <span className="font-medium">
                   {formatPrice(i.priceCents * i.quantity)}

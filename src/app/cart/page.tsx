@@ -21,7 +21,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-20 text-center">
-        <h1 className="font-serif text-3xl font-bold text-navy">
+        <h1 className="text-3xl font-extrabold tracking-tight text-navy">
           Your cart is empty
         </h1>
         <p className="mt-2 text-zinc-500">
@@ -41,7 +41,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="mb-8 font-serif text-3xl font-bold text-navy">
+      <h1 className="mb-8 text-3xl font-extrabold tracking-tight text-navy">
         Shopping Cart
       </h1>
 
@@ -49,7 +49,7 @@ export default function CartPage() {
         <div className="space-y-4 lg:col-span-2">
           {items.map((item) => (
             <div
-              key={item.productId}
+              key={item.variantId}
               className="flex gap-4 rounded-xl border border-black/10 bg-white p-4"
             >
               <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-50">
@@ -65,7 +65,7 @@ export default function CartPage() {
                 <div className="flex justify-between">
                   <Link
                     href={`/products/${item.slug}`}
-                    className="font-serif font-semibold text-navy hover:underline"
+                    className="font-semibold text-navy hover:underline"
                   >
                     {item.name}
                   </Link>
@@ -73,9 +73,7 @@ export default function CartPage() {
                     {formatPrice(item.priceCents * item.quantity)}
                   </span>
                 </div>
-                {item.sizeMg > 0 && (
-                  <p className="text-sm text-zinc-500">{item.sizeMg} mg</p>
-                )}
+                <p className="text-sm text-zinc-500">{item.variantLabel}</p>
                 <p className="text-sm text-zinc-500">
                   {formatPrice(item.priceCents)} each
                 </p>
@@ -84,7 +82,7 @@ export default function CartPage() {
                   <div className="flex items-center rounded-lg border border-black/15">
                     <button
                       onClick={() =>
-                        updateQuantity(item.productId, item.quantity - 1)
+                        updateQuantity(item.variantId, item.quantity - 1)
                       }
                       className="px-3 py-1 text-navy hover:bg-zinc-100"
                       aria-label="Decrease quantity"
@@ -96,7 +94,7 @@ export default function CartPage() {
                     </span>
                     <button
                       onClick={() =>
-                        updateQuantity(item.productId, item.quantity + 1)
+                        updateQuantity(item.variantId, item.quantity + 1)
                       }
                       className="px-3 py-1 text-navy hover:bg-zinc-100"
                       aria-label="Increase quantity"
@@ -105,7 +103,7 @@ export default function CartPage() {
                     </button>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.variantId)}
                     className="text-sm text-red-600 hover:underline"
                   >
                     Remove
@@ -118,7 +116,7 @@ export default function CartPage() {
 
         {/* Order summary */}
         <div className="h-fit rounded-xl border border-black/10 bg-white p-6">
-          <h2 className="mb-4 font-serif text-xl font-bold text-navy">
+          <h2 className="mb-4 text-xl font-extrabold tracking-tight text-navy">
             Order Summary
           </h2>
           <div className="space-y-2 text-sm">

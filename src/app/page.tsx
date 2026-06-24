@@ -29,6 +29,9 @@ export default async function Home() {
     where: { featured: true },
     take: 3,
     orderBy: { priceCents: "asc" },
+    include: {
+      variants: { orderBy: [{ sortOrder: "asc" }, { sizeMg: "asc" }] },
+    },
   });
 
   return (

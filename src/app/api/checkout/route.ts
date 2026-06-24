@@ -7,7 +7,7 @@ const schema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.string().min(1),
+        variantId: z.string().min(1),
         quantity: z.number().int().min(1).max(99),
       }),
     )
@@ -50,39 +50,73 @@ export async function POST(request: Request) {
 
   const { items, shipping } = parsed.data;
 
-  // Load the real products from the DB so prices can't be tampered with client-side.
-  const products = await prisma.product.findMany({
-    where: { id: { in: items.map((i) => i.productId) } },
+  // Load the real variants from the DB so labels and prices can't be tampered
+  // with client-side. Legacy carts may pass a productId in the variantId slot
+  // (when a product has no variants yet); we fall back to that case.
+  const variantIds = items.map((i) => i.variantId);
+  const variants = await prisma.productVariant.findMany({
+    where: { id: { in: variantIds } },
+    include: { product: true },
   });
 
-  // Validate every product exists / is in stock, then build trusted line items.
+  // For any id that wasn't a variant, try treating it as a legacy productId.
+  const missingIds = variantIds.filter(
+    (id) => !variants.some((v) => v.id === id),
+  );
+  const legacyProducts = missingIds.length
+    ? await prisma.product.findMany({ where: { id: { in: missingIds } } })
+    : [];
+
   const lineItems: {
     productId: string;
+    variantId: string | null;
     name: string;
     priceCents: number;
     quantity: number;
   }[] = [];
 
   for (const item of items) {
-    const product = products.find((p) => p.id === item.productId);
-    if (!product) {
-      return NextResponse.json(
-        { error: "One or more items are no longer available" },
-        { status: 400 },
-      );
+    const variant = variants.find((v) => v.id === item.variantId);
+    if (variant) {
+      if (!variant.product.inStock || !variant.inStock) {
+        return NextResponse.json(
+          {
+            error: `${variant.product.name} (${variant.label}) is out of stock`,
+          },
+          { status: 400 },
+        );
+      }
+      lineItems.push({
+        productId: variant.productId,
+        variantId: variant.id,
+        name: `${variant.product.name} — ${variant.label}`,
+        priceCents: variant.priceCents,
+        quantity: item.quantity,
+      });
+      continue;
     }
-    if (!product.inStock) {
-      return NextResponse.json(
-        { error: `${product.name} is out of stock` },
-        { status: 400 },
-      );
+    // Legacy fallback: id matches a product with no variants.
+    const product = legacyProducts.find((p) => p.id === item.variantId);
+    if (product) {
+      if (!product.inStock) {
+        return NextResponse.json(
+          { error: `${product.name} is out of stock` },
+          { status: 400 },
+        );
+      }
+      lineItems.push({
+        productId: product.id,
+        variantId: null,
+        name: product.name,
+        priceCents: product.priceCents,
+        quantity: item.quantity,
+      });
+      continue;
     }
-    lineItems.push({
-      productId: product.id,
-      name: product.name,
-      priceCents: product.priceCents,
-      quantity: item.quantity,
-    });
+    return NextResponse.json(
+      { error: "One or more items are no longer available" },
+      { status: 400 },
+    );
   }
 
   const subtotal = lineItems.reduce(
@@ -110,9 +144,7 @@ export async function POST(request: Request) {
       shippingState: shipping.state,
       shippingZip: shipping.zip,
       paymentRef,
-      items: {
-        create: lineItems,
-      },
+      items: { create: lineItems },
     },
   });
 

@@ -158,9 +158,134 @@ export async function saveProduct(formData: FormData) {
     await prisma.product.update({ where: { id }, data });
   } else {
     const slug = await uniqueSlug(slugify(d.name));
-    await prisma.product.create({ data: { ...data, slug } });
+    const created = await prisma.product.create({ data: { ...data, slug } });
+    // Auto-create the first variant from the form values so every product
+    // ships with at least one buyable size out of the gate.
+    await prisma.productVariant.create({
+      data: {
+        productId: created.id,
+        label: d.sizeMg > 0 ? `${d.sizeMg} mg` : "Default",
+        sizeMg: d.sizeMg,
+        priceCents: Math.round(d.price * 100),
+        sortOrder: 0,
+      },
+    });
+    refreshStorefront();
+    redirect(`/admin/products/${created.id}/edit?saved=${encodeURIComponent("Product created — add more sizes below")}`);
   }
 
   refreshStorefront();
   redirect(`/admin/products?saved=${encodeURIComponent("Product saved")}`);
+}
+
+// ---------- Variant actions ----------
+
+const VariantInput = z.object({
+  label: z.string().trim().min(1),
+  sizeMg: z.coerce.number().int().min(0),
+  price: z.coerce.number().min(0),
+});
+
+export async function addVariant(productId: string, formData: FormData) {
+  await requireAdmin();
+  const parsed = VariantInput.safeParse({
+    label: formData.get("label"),
+    sizeMg: formData.get("sizeMg"),
+    price: formData.get("price"),
+  });
+  if (!parsed.success) {
+    redirect(
+      `/admin/products/${productId}/edit?error=${encodeURIComponent(
+        "Variant needs a label, size, and price.",
+      )}`,
+    );
+  }
+  const d = parsed.data;
+  const max = await prisma.productVariant.aggregate({
+    where: { productId },
+    _max: { sortOrder: true },
+  });
+  await prisma.productVariant.create({
+    data: {
+      productId,
+      label: d.label,
+      sizeMg: d.sizeMg,
+      priceCents: Math.round(d.price * 100),
+      sortOrder: (max._max.sortOrder ?? -1) + 1,
+    },
+  });
+  refreshStorefront();
+  redirect(
+    `/admin/products/${productId}/edit?saved=${encodeURIComponent("Size added")}`,
+  );
+}
+
+export async function updateVariant(variantId: string, formData: FormData) {
+  await requireAdmin();
+  const v = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { productId: true },
+  });
+  if (!v) return;
+  const parsed = VariantInput.safeParse({
+    label: formData.get("label"),
+    sizeMg: formData.get("sizeMg"),
+    price: formData.get("price"),
+  });
+  if (!parsed.success) {
+    redirect(
+      `/admin/products/${v.productId}/edit?error=${encodeURIComponent(
+        "Each size needs a label, mg, and price.",
+      )}`,
+    );
+  }
+  const d = parsed.data;
+  await prisma.productVariant.update({
+    where: { id: variantId },
+    data: {
+      label: d.label,
+      sizeMg: d.sizeMg,
+      priceCents: Math.round(d.price * 100),
+    },
+  });
+  refreshStorefront();
+  redirect(
+    `/admin/products/${v.productId}/edit?saved=${encodeURIComponent("Size updated")}`,
+  );
+}
+
+export async function toggleVariantStock(variantId: string) {
+  await requireAdmin();
+  const v = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { inStock: true },
+  });
+  if (v) {
+    await prisma.productVariant.update({
+      where: { id: variantId },
+      data: { inStock: !v.inStock },
+    });
+  }
+  refreshStorefront();
+}
+
+export async function deleteVariant(variantId: string) {
+  await requireAdmin();
+  const v = await prisma.productVariant.findUnique({
+    where: { id: variantId },
+    select: { productId: true, _count: { select: { orderItems: true } } },
+  });
+  if (!v) return;
+  if (v._count.orderItems > 0) {
+    redirect(
+      `/admin/products/${v.productId}/edit?error=${encodeURIComponent(
+        "That size appears in past orders, so it can't be deleted. Mark it out of stock instead.",
+      )}`,
+    );
+  }
+  await prisma.productVariant.delete({ where: { id: variantId } });
+  refreshStorefront();
+  redirect(
+    `/admin/products/${v.productId}/edit?saved=${encodeURIComponent("Size removed")}`,
+  );
 }

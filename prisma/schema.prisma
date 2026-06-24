@@ -23,8 +23,8 @@ model User {
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  slug        String      @unique
+  id          String           @id @default(cuid())
+  slug        String           @unique
   name        String
   description String
   category    String
@@ -33,10 +33,30 @@ model Product {
   sizeMg      Int
   purity      String
   imageUrl    String
-  featured    Boolean     @default(false)
-  inStock     Boolean     @default(true)
-  createdAt   DateTime    @default(now())
+  featured    Boolean          @default(false)
+  inStock     Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  variants    ProductVariant[]
   orderItems  OrderItem[]
+}
+
+/// Size/price options a customer can pick when buying a product.
+/// A product with no variants is sold at its base priceCents/sizeMg.
+/// A product with one or more variants is sold ONLY through them — the base
+/// price/size act as a fallback for legacy single-option products.
+model ProductVariant {
+  id         String      @id @default(cuid())
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId  String
+  label      String // displayed on the card / picker, e.g. "5 mg" or "20 mg Box"
+  sizeMg     Int // numeric size for sorting & display; 0 = non-peptide (e.g. liquid)
+  priceCents Int
+  inStock    Boolean     @default(true)
+  sortOrder  Int         @default(0)
+  createdAt  DateTime    @default(now())
+  orderItems OrderItem[]
+
+  @@index([productId, sortOrder])
 }
 
 model Order {
@@ -57,12 +77,14 @@ model Order {
 }
 
 model OrderItem {
-  id         String  @id @default(cuid())
-  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id         String          @id @default(cuid())
+  order      Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId    String
-  product    Product @relation(fields: [productId], references: [id])
+  product    Product         @relation(fields: [productId], references: [id])
   productId  String
-  name       String
+  variant    ProductVariant? @relation(fields: [variantId], references: [id])
+  variantId  String?
+  name       String // snapshot at time of order, includes variant label
   priceCents Int
   quantity   Int
 }

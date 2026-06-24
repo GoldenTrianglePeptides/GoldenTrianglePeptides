@@ -1,9 +1,13 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const products = [
+type SeedProduct = Omit<Prisma.ProductCreateInput, "variants"> & {
+  variants: { label: string; sizeMg: number; priceCents: number }[];
+};
+
+const products: SeedProduct[] = [
   {
     slug: "semaglutide-5mg",
     name: "Semaglutide",
@@ -16,6 +20,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: true,
+    variants: [
+      { label: "5 mg", sizeMg: 5, priceCents: 12999 },
+      { label: "10 mg", sizeMg: 10, priceCents: 22999 },
+      { label: "20 mg", sizeMg: 20, priceCents: 39999 },
+    ],
   },
   {
     slug: "tirzepatide-10mg",
@@ -29,6 +38,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: true,
+    variants: [
+      { label: "10 mg", sizeMg: 10, priceCents: 18999 },
+      { label: "30 mg", sizeMg: 30, priceCents: 49999 },
+      { label: "60 mg", sizeMg: 60, priceCents: 89999 },
+    ],
   },
   {
     slug: "retatrutide-10mg",
@@ -42,6 +56,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: true,
+    variants: [
+      { label: "10 mg", sizeMg: 10, priceCents: 21999 },
+      { label: "20 mg", sizeMg: 20, priceCents: 39999 },
+      { label: "40 mg", sizeMg: 40, priceCents: 69999 },
+    ],
   },
   {
     slug: "liraglutide-5mg",
@@ -55,6 +74,10 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "5 mg", sizeMg: 5, priceCents: 9999 },
+      { label: "15 mg", sizeMg: 15, priceCents: 24999 },
+    ],
   },
   {
     slug: "mots-c-10mg",
@@ -68,6 +91,10 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "10 mg", sizeMg: 10, priceCents: 6999 },
+      { label: "30 mg", sizeMg: 30, priceCents: 18999 },
+    ],
   },
   {
     slug: "bpc-157-5mg",
@@ -81,6 +108,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: true,
+    variants: [
+      { label: "5 mg", sizeMg: 5, priceCents: 4999 },
+      { label: "10 mg", sizeMg: 10, priceCents: 8499 },
+      { label: "20 mg", sizeMg: 20, priceCents: 14999 },
+    ],
   },
   {
     slug: "tb-500-5mg",
@@ -94,6 +126,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "5 mg", sizeMg: 5, priceCents: 5999 },
+      { label: "10 mg", sizeMg: 10, priceCents: 9999 },
+      { label: "20 mg", sizeMg: 20, priceCents: 17999 },
+    ],
   },
   {
     slug: "klow-blend",
@@ -107,6 +144,10 @@ const products = [
     purity: "≥ 98%",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "10 mg", sizeMg: 10, priceCents: 8999 },
+      { label: "25 mg", sizeMg: 25, priceCents: 19999 },
+    ],
   },
   {
     slug: "cjc-1295-ipamorelin",
@@ -120,6 +161,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: true,
+    variants: [
+      { label: "10 mg", sizeMg: 10, priceCents: 6999 },
+      { label: "20 mg", sizeMg: 20, priceCents: 12999 },
+      { label: "40 mg", sizeMg: 40, priceCents: 22999 },
+    ],
   },
   {
     slug: "ghk-cu-50mg",
@@ -133,6 +179,11 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: true,
+    variants: [
+      { label: "50 mg", sizeMg: 50, priceCents: 6499 },
+      { label: "100 mg", sizeMg: 100, priceCents: 11999 },
+      { label: "200 mg", sizeMg: 200, priceCents: 21999 },
+    ],
   },
   {
     slug: "thymosin-alpha-1-5mg",
@@ -146,6 +197,10 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "5 mg", sizeMg: 5, priceCents: 7999 },
+      { label: "10 mg", sizeMg: 10, priceCents: 13999 },
+    ],
   },
   {
     slug: "pt-141-10mg",
@@ -159,6 +214,10 @@ const products = [
     purity: "≥ 99%",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "10 mg", sizeMg: 10, priceCents: 5499 },
+      { label: "20 mg", sizeMg: 20, priceCents: 9999 },
+    ],
   },
   {
     slug: "bacteriostatic-water-10ml",
@@ -172,6 +231,10 @@ const products = [
     purity: "USP Grade",
     imageUrl: "/products/vial.png",
     featured: false,
+    variants: [
+      { label: "10 mL", sizeMg: 0, priceCents: 999 },
+      { label: "30 mL", sizeMg: 0, priceCents: 2499 },
+    ],
   },
 ];
 
@@ -179,16 +242,33 @@ async function main() {
   console.log("Seeding database...");
 
   // Ensure the baseline catalog exists. This is non-destructive — it never
-  // overwrites or deletes products — so any changes you make in the Admin
-  // dashboard are preserved across deploys. Manage the live catalog there.
+  // overwrites existing products or variants — so any changes you make in
+  // the Admin dashboard are preserved across deploys.
   for (const p of products) {
-    await prisma.product.upsert({
+    const { variants, ...productData } = p;
+    const product = await prisma.product.upsert({
       where: { slug: p.slug },
       update: {},
-      create: p,
+      create: productData,
     });
+
+    // Only seed the variant set when the product has none yet.
+    const existing = await prisma.productVariant.count({
+      where: { productId: product.id },
+    });
+    if (existing === 0) {
+      await prisma.productVariant.createMany({
+        data: variants.map((v, i) => ({
+          productId: product.id,
+          label: v.label,
+          sizeMg: v.sizeMg,
+          priceCents: v.priceCents,
+          sortOrder: i,
+        })),
+      });
+    }
   }
-  console.log(`Ensured ${products.length} baseline products.`);
+  console.log(`Ensured ${products.length} baseline products with variants.`);
 
   // Admin account — credentials come from the environment so the live site is
   // never seeded with a publicly known default password.

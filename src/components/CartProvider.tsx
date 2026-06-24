@@ -10,12 +10,13 @@ import {
 } from "react";
 
 export type CartItem = {
+  variantId: string;
   productId: string;
   slug: string;
-  name: string;
+  name: string; // product name
+  variantLabel: string; // e.g. "10 mg"
   priceCents: number;
   imageUrl: string;
-  sizeMg: number;
   quantity: number;
 };
 
@@ -24,14 +25,15 @@ type CartContextValue = {
   count: number;
   subtotalCents: number;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  updateQuantity: (variantId: string, quantity: number) => void;
+  removeItem: (variantId: string) => void;
   clear: () => void;
   ready: boolean;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
-const STORAGE_KEY = "gtp_cart_v1";
+// v2 — schema includes variantId; legacy v1 carts (productId-only) are discarded.
+const STORAGE_KEY = "gtp_cart_v2";
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -44,6 +46,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setItems(JSON.parse(raw));
+      // Clean up any legacy cart entry from before variants existed.
+      localStorage.removeItem("gtp_cart_v1");
     } catch {
       // ignore malformed storage
     }
@@ -60,10 +64,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const addItem = useCallback(
     (item: Omit<CartItem, "quantity">, quantity = 1) => {
       setItems((prev) => {
-        const existing = prev.find((i) => i.productId === item.productId);
+        const existing = prev.find((i) => i.variantId === item.variantId);
         if (existing) {
           return prev.map((i) =>
-            i.productId === item.productId
+            i.variantId === item.variantId
               ? { ...i, quantity: i.quantity + quantity }
               : i,
           );
@@ -74,11 +78,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [],
   );
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((variantId: string, quantity: number) => {
     setItems((prev) =>
       prev
         .map((i) =>
-          i.productId === productId
+          i.variantId === variantId
             ? { ...i, quantity: Math.max(0, quantity) }
             : i,
         )
@@ -86,8 +90,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.productId !== productId));
+  const removeItem = useCallback((variantId: string) => {
+    setItems((prev) => prev.filter((i) => i.variantId !== variantId));
   }, []);
 
   const clear = useCallback(() => setItems([]), []);
