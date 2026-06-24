@@ -95,6 +95,10 @@ model Order {
   paymentProvider String? // e.g. "nowpayments"; null for demo orders
   paymentStatus   String? // raw provider status: waiting, confirming, confirmed, finished, partially_paid, failed, expired
   paymentUrl      String? // hosted checkout URL so a pending order can be reopened
+  // Fulfillment / shipping.
+  trackingNumber  String? // carrier tracking number, set when marked shipped
+  trackingCarrier String? // e.g. "USPS", "UPS", "FedEx", "DHL"
+  shippedAt       DateTime? // when the order was marked shipped
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 }

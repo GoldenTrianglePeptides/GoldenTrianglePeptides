@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { formatPrice, formatDate } from "@/lib/format";
+import { formatPrice, formatDate, carrierTrackingUrl } from "@/lib/format";
 import OrderStatusWatcher from "./OrderStatusWatcher";
+import AdminShippingControls from "./AdminShippingControls";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,57 @@ export default async function OrderPage({
           {order.shippingCity}, {order.shippingState} {order.shippingZip}
         </address>
       </div>
+
+      {order.status === "shipped" && (
+        <div className="mt-6 rounded-xl border border-purple-200 bg-purple-50 p-6">
+          <h2 className="mb-2 flex items-center gap-2 font-serif text-lg font-bold text-navy">
+            <span aria-hidden>📦</span> Your order has shipped
+          </h2>
+          {order.trackingNumber ? (
+            <div className="text-sm text-zinc-700">
+              {order.trackingCarrier && (
+                <p>
+                  <span className="text-zinc-500">Carrier:</span>{" "}
+                  {order.trackingCarrier}
+                </p>
+              )}
+              <p>
+                <span className="text-zinc-500">Tracking #:</span>{" "}
+                <span className="font-mono">{order.trackingNumber}</span>
+              </p>
+              {(() => {
+                const url = carrierTrackingUrl(
+                  order.trackingCarrier,
+                  order.trackingNumber,
+                );
+                return url ? (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-block rounded-lg bg-navy px-5 py-2.5 text-sm font-semibold text-white hover:bg-navy-dark"
+                  >
+                    Track Your Package
+                  </a>
+                ) : null;
+              })()}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-600">
+              Your package is on its way.
+            </p>
+          )}
+        </div>
+      )}
+
+      {user.isAdmin && isPaid && (
+        <AdminShippingControls
+          orderId={order.id}
+          status={order.status}
+          initialTrackingNumber={order.trackingNumber}
+          initialCarrier={order.trackingCarrier}
+        />
+      )}
 
       <div className="mt-6 flex gap-4">
         <Link

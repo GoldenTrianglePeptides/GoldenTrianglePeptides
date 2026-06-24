@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { carrierTrackingUrl } from "./format";
 
 // Email sending via Resend (https://resend.com).
 //
@@ -275,5 +276,94 @@ export async function sendPasswordResetEmail(
     });
   } catch (err) {
     console.error(`[email] Failed to send password reset to ${input.to}:`, err);
+  }
+}
+
+// --- Shipping notification --------------------------------------------------
+
+export type ShippingNotificationInput = {
+  to: string;
+  customerName: string;
+  orderNumber: string;
+  trackingNumber?: string | null;
+  carrier?: string | null;
+  orderUrl: string;
+};
+
+export async function sendShippingNotification(
+  input: ShippingNotificationInput,
+): Promise<void> {
+  const c = client();
+  if (!c) {
+    console.warn(
+      `[email] RESEND_API_KEY not set — skipping shipping notice for order ${input.orderNumber}`,
+    );
+    return;
+  }
+
+  const trackUrl = carrierTrackingUrl(input.carrier, input.trackingNumber);
+
+  const trackingBlock = input.trackingNumber
+    ? `
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f4f4f5;border-radius:8px;">
+        <tr><td style="padding:16px;">
+          ${input.carrier ? `<div style="color:#71717a;font-size:13px;">Carrier</div><div style="color:#27272a;font-weight:600;margin-bottom:10px;">${escapeHtml(input.carrier)}</div>` : ""}
+          <div style="color:#71717a;font-size:13px;">Tracking number</div>
+          <div style="color:#27272a;font-weight:600;font-family:monospace;">${escapeHtml(input.trackingNumber)}</div>
+        </td></tr>
+      </table>
+      ${
+        trackUrl
+          ? `<div style="margin:0 0 8px;"><a href="${trackUrl}" style="background:#d4af37;color:#0a1e3f;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px;display:inline-block;">Track Your Package</a></div>`
+          : ""
+      }
+    `
+    : `<p style="color:#27272a;">Your package is on its way. You'll receive tracking details if they become available.</p>`;
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#0a1e3f;">Your order has shipped! 📦</h1>
+    <p style="margin:0 0 4px;color:#27272a;">Hi ${escapeHtml(input.customerName)},</p>
+    <p style="margin:0 0 8px;color:#52525b;">
+      Good news — order #${escapeHtml(input.orderNumber)} is on its way.
+    </p>
+    ${trackingBlock}
+    <p style="margin:24px 0 0;">
+      <a href="${input.orderUrl}" style="color:#0a1e3f;font-weight:600;">View your order details →</a>
+    </p>
+  `;
+
+  const text = [
+    `Your order has shipped!`,
+    ``,
+    `Hi ${input.customerName},`,
+    `Order #${input.orderNumber} is on its way.`,
+    ``,
+    ...(input.carrier ? [`Carrier: ${input.carrier}`] : []),
+    ...(input.trackingNumber
+      ? [`Tracking number: ${input.trackingNumber}`]
+      : []),
+    ...(trackUrl ? [`Track it: ${trackUrl}`] : []),
+    ``,
+    `View your order: ${input.orderUrl}`,
+  ].join("\n");
+
+  try {
+    await c.emails.send({
+      from: sender(),
+      to: input.to,
+      subject: `Your order #${input.orderNumber} has shipped — ${BRAND_NAME}`,
+      html: renderShell({
+        preheader: input.trackingNumber
+          ? `On its way! Tracking: ${input.trackingNumber}`
+          : `Your order is on its way!`,
+        body,
+      }),
+      text,
+    });
+  } catch (err) {
+    console.error(
+      `[email] Failed to send shipping notice for order ${input.orderNumber}:`,
+      err,
+    );
   }
 }
