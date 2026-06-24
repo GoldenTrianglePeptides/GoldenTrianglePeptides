@@ -11,6 +11,11 @@ export const metadata = {
   title: "Admin | Golden Triangle Peptides",
 };
 
+// Statuses that mean the customer has actually paid. Open crypto invoices
+// (awaiting_payment), partial payments, and failed/expired/cancelled orders are
+// hidden from the dashboard so it only reflects real, completed sales.
+const PAID_STATUSES = ["paid", "processing", "shipped", "delivered"];
+
 export default async function AdminPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/admin");
@@ -18,6 +23,7 @@ export default async function AdminPage() {
 
   const [orders, productCount, userCount] = await Promise.all([
     prisma.order.findMany({
+      where: { status: { in: PAID_STATUSES } },
       orderBy: { createdAt: "desc" },
       take: 50,
       include: { items: true, user: true },
@@ -43,7 +49,7 @@ export default async function AdminPage() {
       </div>
 
       <div className="mb-8 grid gap-4 sm:grid-cols-4">
-        <Stat label="Orders" value={orders.length.toString()} />
+        <Stat label="Paid Orders" value={orders.length.toString()} />
         <Stat label="Revenue (recent)" value={formatPrice(revenue)} />
         <Link href="/admin/products" className="block">
           <Stat label="Products" value={productCount.toString()} hint="Manage →" />
@@ -52,10 +58,10 @@ export default async function AdminPage() {
       </div>
 
       <h2 className="mb-4 font-serif text-2xl font-bold text-navy">
-        Recent Orders
+        Recent Paid Orders
       </h2>
       {orders.length === 0 ? (
-        <p className="text-zinc-500">No orders yet.</p>
+        <p className="text-zinc-500">No paid orders yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-black/10 bg-white">
           <table className="w-full text-left text-sm">
