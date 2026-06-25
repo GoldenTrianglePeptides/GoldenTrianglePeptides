@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
 import DeleteOrderButton from "./DeleteOrderButton";
 import OrderStatusActions from "./OrderStatusActions";
+import AdminPendingAutoSync from "./AdminPendingAutoSync";
 import { PAID_STATUSES } from "@/lib/orderStatus";
 
 export const dynamic = "force-dynamic";
@@ -42,6 +43,7 @@ export default async function AdminPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
+      <AdminPendingAutoSync pendingCount={pendingOrders.length} />
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-extrabold tracking-tight text-navy">
           Admin Dashboard
