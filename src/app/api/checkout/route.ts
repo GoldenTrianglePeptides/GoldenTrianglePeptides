@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import * as nowpayments from "@/lib/nowpayments";
+import { SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
 
 /**
  * Resolve the public origin used to build payment redirect/callback URLs.
@@ -34,7 +35,6 @@ const schema = z.object({
   }),
 });
 
-const SHIPPING_FLAT_CENTS = 1000; // $10 flat-rate shipping
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();

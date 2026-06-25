@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice } from "@/lib/format";
-
-const SHIPPING_FLAT_CENTS = 1000;
+import { SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
 
 export default function CheckoutForm({
   userName,

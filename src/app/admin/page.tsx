@@ -5,17 +5,13 @@ import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
 import DeleteOrderButton from "./DeleteOrderButton";
 import OrderStatusActions from "./OrderStatusActions";
+import { PAID_STATUSES } from "@/lib/orderStatus";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Admin | Golden Triangle Peptides",
 };
-
-// Statuses that mean the customer has actually paid. Open crypto invoices
-// (awaiting_payment), partial payments, and failed/expired/cancelled orders are
-// hidden from the dashboard so it only reflects real, completed sales.
-const PAID_STATUSES = ["paid", "processing", "shipped", "delivered"];
 
 export default async function AdminPage() {
   const user = await getCurrentUser();
@@ -24,7 +20,7 @@ export default async function AdminPage() {
 
   const [orders, pendingOrders, productCount, userCount] = await Promise.all([
     prisma.order.findMany({
-      where: { status: { in: PAID_STATUSES } },
+      where: { status: { in: [...PAID_STATUSES] } },
       orderBy: { createdAt: "desc" },
       take: 50,
       include: { items: true, user: true },
@@ -33,7 +29,7 @@ export default async function AdminPage() {
     // because an IPN webhook never arrived. Surfaced so an admin can pull the
     // real status from NOWPayments (or mark paid by hand).
     prisma.order.findMany({
-      where: { status: { notIn: PAID_STATUSES } },
+      where: { status: { notIn: [...PAID_STATUSES] } },
       orderBy: { createdAt: "desc" },
       take: 50,
       include: { items: true, user: true },

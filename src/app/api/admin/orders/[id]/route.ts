@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { isSameOrigin } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +11,13 @@ export const dynamic = "force-dynamic";
  * cascade). Used by the trash button on the admin dashboard.
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Cross-origin request" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -24,10 +30,15 @@ export async function DELETE(
 
   try {
     await prisma.order.delete({ where: { id } });
-  } catch {
-    // Order didn't exist or was already deleted — treat as success so a
-    // duplicate click from the admin UI doesn't surface an error.
-    return NextResponse.json({ ok: true });
+  } catch (err) {
+    // P2025 = record not found: already deleted, so a duplicate click is fine.
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === "P2025"
+    ) {
+      return NextResponse.json({ ok: true });
+    }
+    throw err;
   }
 
   return NextResponse.json({ ok: true });
