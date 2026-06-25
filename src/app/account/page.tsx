@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
 import CancelOrderButton from "@/components/CancelOrderButton";
+import DeleteOrderButton from "@/components/DeleteOrderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -96,6 +97,14 @@ export default async function AccountPage() {
                     Payment not completed yet
                   </span>
                   <CancelOrderButton orderId={order.id} />
+                </div>
+              )}
+              {["cancelled", "failed", "expired"].includes(order.status) && (
+                <div className="flex items-center justify-between gap-3 border-t border-black/10 px-5 py-3">
+                  <span className="text-xs text-zinc-500">
+                    This order was not completed
+                  </span>
+                  <DeleteOrderButton orderId={order.id} />
                 </div>
               )}
             </div>
