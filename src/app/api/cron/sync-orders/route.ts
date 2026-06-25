@@ -23,8 +23,10 @@ export const maxDuration = 60;
  * `CRON_SECRET` in Vercel env vars to enable; manual hits without the bearer are
  * rejected. Requires NOWPAYMENTS_EMAIL/PASSWORD (see canQueryPayments).
  *
- * NOTE: on Vercel's Hobby plan crons run at most once per day regardless of the
- * schedule in vercel.json — upgrade to Pro for true hourly self-healing.
+ * NOTE: Vercel's Hobby plan only allows crons that run at most ONCE PER DAY. A
+ * sub-daily schedule (e.g. "0 * * * *") makes the whole deployment FAIL — it
+ * does not get silently downgraded. Keep the schedule in vercel.json daily on
+ * Hobby (it's "0 14 * * *"); only switch to hourly after upgrading to Pro.
  */
 export async function GET() {
   return run();
