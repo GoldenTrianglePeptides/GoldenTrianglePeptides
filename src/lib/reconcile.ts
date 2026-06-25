@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import * as nowpayments from "@/lib/nowpayments";
 import { settleOrderPaid } from "@/lib/fulfillment";
 import { isSettledPaid } from "@/lib/orderStatus";
+import { releaseOrderStock } from "@/lib/inventory";
 
 export type ReconcileResult = {
   status: string;
@@ -102,5 +103,9 @@ export async function reconcileOrder(
     where: { id: order.id },
     data: { status: nextStatus, paymentStatus: p.payment_status },
   });
+  // A dead order releases its reserved stock back to inventory.
+  if (nextStatus === "failed" || nextStatus === "expired") {
+    await releaseOrderStock(order.id);
+  }
   return { status: nextStatus, changed: order.status !== nextStatus };
 }

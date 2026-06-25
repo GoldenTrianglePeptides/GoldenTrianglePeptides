@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { isSameOrigin } from "@/lib/http";
+import { isSettledPaid } from "@/lib/orderStatus";
+import { releaseOrderStock } from "@/lib/inventory";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +29,17 @@ export async function DELETE(
   }
 
   const { id } = await ctx.params;
+
+  // If we're deleting a still-reserved, never-paid order, give its stock back
+  // first (no-op if already released or never reserved). Paid orders kept their
+  // stock legitimately, so don't restock those.
+  const existing = await prisma.order.findUnique({
+    where: { id },
+    select: { status: true },
+  });
+  if (existing && !isSettledPaid(existing.status)) {
+    await releaseOrderStock(id);
+  }
 
   try {
     await prisma.order.delete({ where: { id } });

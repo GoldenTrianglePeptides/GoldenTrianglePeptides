@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { isSameOrigin } from "@/lib/http";
+import { releaseOrderStock } from "@/lib/inventory";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,8 @@ export async function POST(
     where: { id },
     data: { status: "cancelled" },
   });
+  // Give the reserved stock back now that the order is dead.
+  await releaseOrderStock(id);
 
   return NextResponse.json({ ok: true });
 }

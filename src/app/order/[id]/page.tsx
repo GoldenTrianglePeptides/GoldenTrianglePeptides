@@ -6,6 +6,7 @@ import { formatPrice, formatDate, carrierTrackingUrl } from "@/lib/format";
 import OrderStatusWatcher from "./OrderStatusWatcher";
 import AdminShippingControls from "./AdminShippingControls";
 import CancelOrderButton from "@/components/CancelOrderButton";
+import ReorderButton from "@/components/ReorderButton";
 import {
   PAID_STATUSES,
   FAILED_STATUSES,
@@ -41,6 +42,36 @@ export default async function OrderPage({
     (sum, i) => sum + i.priceCents * i.quantity,
     0,
   );
+
+  // Build a reorder list from items whose variant is still purchasable, using
+  // current product data (slug/image/label/price) since order items only store
+  // a name snapshot. Unavailable items are simply omitted.
+  const variantIds = order.items
+    .map((i) => i.variantId)
+    .filter((v): v is string => v !== null);
+  const liveVariants = variantIds.length
+    ? await prisma.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: { product: true },
+      })
+    : [];
+  const reorderItems = order.items.flatMap((i) => {
+    if (!i.variantId) return [];
+    const v = liveVariants.find((lv) => lv.id === i.variantId);
+    if (!v || !v.inStock || !v.product.inStock) return [];
+    return [
+      {
+        variantId: v.id,
+        productId: v.productId,
+        slug: v.product.slug,
+        name: v.product.name,
+        variantLabel: v.label,
+        priceCents: v.priceCents,
+        imageUrl: v.product.imageUrl,
+        quantity: i.quantity,
+      },
+    ];
+  });
 
   const isPaid = PAID_STATUSES.includes(order.status);
   const isFailed = FAILED_STATUSES.includes(order.status);
@@ -164,6 +195,12 @@ export default async function OrderPage({
             <span>{formatPrice(order.totalCents)}</span>
           </div>
         </div>
+
+        {reorderItems.length > 0 && (
+          <div className="mt-5 flex justify-end border-t border-black/10 pt-4">
+            <ReorderButton items={reorderItems} />
+          </div>
+        )}
       </div>
 
       <div className="mt-6 rounded-xl border border-black/10 bg-white p-6">

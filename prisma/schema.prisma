@@ -115,6 +115,12 @@ model Order {
   // Set when the cron has emailed the customer an abandoned-payment reminder;
   // used to avoid sending more than one reminder per order.
   reminderSentAt  DateTime?
+  // Inventory reservation bookkeeping. Stock is reserved (decremented) at
+  // checkout; stockReserved records that so we only ever restock orders that
+  // actually held a reservation (orders created before this feature have it
+  // false). stockReleased makes the restock idempotent across cancel/expire.
+  stockReserved   Boolean     @default(false)
+  stockReleased   Boolean     @default(false)
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 

@@ -5,13 +5,13 @@ import { reportError } from "@/lib/observability";
 import { SETTLED_PAID_STATUSES, SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
 
 /**
- * Settle an order as paid and run the one-time fulfillment side effects:
- * decrement tracked stock and email the receipt.
+ * Settle an order as paid and email the receipt. Stock was already reserved at
+ * checkout, so a paid order just keeps its reservation — no stock change here.
  *
- * Call this only on the transition INTO paid — callers must first check the
- * order isn't already in SETTLED_PAID_STATUSES, otherwise stock would be
- * double-decremented and a second receipt sent. Side-effect failures are logged
- * but never thrown, so a flaky email/stock update can't undo the paid status.
+ * The transition to paid is atomic (conditional updateMany below), so even under
+ * concurrent webhook/cron/sync deliveries only the winning caller emails the
+ * receipt — it's sent exactly once. Receipt failures are reported but never
+ * thrown, so a flaky email can't undo the paid status.
  */
 export async function settleOrderPaid(
   order: Order,
@@ -46,27 +46,8 @@ export async function settleOrderPaid(
     where: { orderId: order.id },
   });
 
-  // Decrement tracked stock; flip a variant out of stock when it hits zero.
-  try {
-    for (const item of items) {
-      if (!item.variantId) continue;
-      const variant = await prisma.productVariant.findUnique({
-        where: { id: item.variantId },
-        select: { stockQty: true },
-      });
-      if (!variant || variant.stockQty === null) continue; // untracked
-      const remaining = Math.max(0, variant.stockQty - item.quantity);
-      await prisma.productVariant.update({
-        where: { id: item.variantId },
-        data: {
-          stockQty: remaining,
-          ...(remaining === 0 ? { inStock: false } : {}),
-        },
-      });
-    }
-  } catch (err) {
-    reportError("fulfillment.stock", err, { orderId: order.id });
-  }
+  // Stock was already reserved at checkout (see lib/inventory.reserveStock), so
+  // a paid order simply keeps its reservation — nothing to decrement here.
 
   try {
     const subtotalCents = items.reduce(
