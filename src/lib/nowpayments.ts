@@ -15,6 +15,12 @@ import crypto from "node:crypto";
 //   NEXT_PUBLIC_SITE_URL    - your public site origin, e.g.
 //                             https://goldentrianglepeptide.com (used to build
 //                             the success/cancel/callback URLs)
+//
+// Optional, only for the admin "sync payment status" backstop (pulls the real
+// status from NOWPayments when the IPN webhook didn't arrive). The list-payments
+// endpoint requires a JWT, which needs your dashboard login:
+//   NOWPAYMENTS_EMAIL       - your NOWPayments account email
+//   NOWPAYMENTS_PASSWORD    - your NOWPayments account password
 
 const API_BASE = "https://api.nowpayments.io/v1";
 
@@ -26,6 +32,19 @@ export function isConfigured(): boolean {
 /** True when incoming IPN webhooks can be cryptographically verified. */
 export function canVerifyIpn(): boolean {
   return Boolean(process.env.NOWPAYMENTS_IPN_SECRET);
+}
+
+/**
+ * True when we can pull payment status from NOWPayments on demand. The
+ * list-payments endpoint needs a JWT (dashboard login), so this requires the
+ * email/password env vars in addition to the API key.
+ */
+export function canQueryPayments(): boolean {
+  return Boolean(
+    process.env.NOWPAYMENTS_API_KEY &&
+      process.env.NOWPAYMENTS_EMAIL &&
+      process.env.NOWPAYMENTS_PASSWORD,
+  );
 }
 
 type CreateInvoiceParams = {
@@ -89,6 +108,94 @@ export async function createInvoice(
   }
 
   return { invoiceId: data.id, invoiceUrl: data.invoice_url };
+}
+
+/**
+ * Authenticate with email/password to get a short-lived (≈5 min) JWT. Required
+ * by the list-payments endpoint; the API key alone isn't enough there.
+ */
+async function getAuthToken(): Promise<string> {
+  const email = process.env.NOWPAYMENTS_EMAIL;
+  const password = process.env.NOWPAYMENTS_PASSWORD;
+  if (!email || !password) {
+    throw new Error("NOWPAYMENTS_EMAIL / NOWPAYMENTS_PASSWORD are not set");
+  }
+
+  const res = await fetch(`${API_BASE}/auth`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`NOWPayments auth failed (${res.status}): ${detail}`);
+  }
+  const data = (await res.json()) as { token?: string };
+  if (!data.token) throw new Error("NOWPayments auth returned no token");
+  return data.token;
+}
+
+/** A NOWPayments payment record (only the fields we use). */
+export type NowPaymentsPayment = {
+  payment_id?: number | string;
+  invoice_id?: number | string | null;
+  order_id?: string | null;
+  payment_status?: string;
+  price_amount?: number;
+  pay_amount?: number;
+  outcome_amount?: number;
+};
+
+/**
+ * Find the latest NOWPayments payment for one of our orders, matched by the
+ * `order_id` we set when creating the invoice. This is the backstop for when the
+ * IPN webhook never arrived. Returns null if no payment exists for the order
+ * yet. Requires `canQueryPayments()` to be true.
+ *
+ * `since` narrows the server-side date window (NOWPayments expects YYYY-MM-DD);
+ * pass a little before the order was created.
+ */
+export async function fetchLatestPaymentForOrder(
+  orderId: string,
+  opts?: { since?: Date },
+): Promise<NowPaymentsPayment | null> {
+  const apiKey = process.env.NOWPAYMENTS_API_KEY;
+  if (!apiKey) throw new Error("NOWPAYMENTS_API_KEY is not set");
+
+  const token = await getAuthToken();
+
+  const params = new URLSearchParams({
+    limit: "500",
+    page: "0",
+    sortBy: "created_at",
+    orderBy: "desc",
+  });
+  if (opts?.since) {
+    params.set("dateFrom", opts.since.toISOString().slice(0, 10));
+  }
+
+  const res = await fetch(`${API_BASE}/payment/?${params.toString()}`, {
+    headers: {
+      "x-api-key": apiKey,
+      Authorization: `Bearer ${token}`,
+    },
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(
+      `NOWPayments list payments failed (${res.status}): ${detail}`,
+    );
+  }
+
+  const data = (await res.json()) as { data?: NowPaymentsPayment[] };
+  const matches = (data.data ?? []).filter((p) => p.order_id === orderId);
+  if (matches.length === 0) return null;
+
+  // The list is sorted newest-first, but prefer a finished payment if the order
+  // was paid across more than one attempt.
+  return matches.find((p) => p.payment_status === "finished") ?? matches[0];
 }
 
 /**

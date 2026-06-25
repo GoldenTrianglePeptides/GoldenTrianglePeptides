@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
 import DeleteOrderButton from "./DeleteOrderButton";
+import OrderStatusActions from "./OrderStatusActions";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +22,18 @@ export default async function AdminPage() {
   if (!user) redirect("/login?next=/admin");
   if (!user.isAdmin) redirect("/account");
 
-  const [orders, productCount, userCount] = await Promise.all([
+  const [orders, pendingOrders, productCount, userCount] = await Promise.all([
     prisma.order.findMany({
       where: { status: { in: PAID_STATUSES } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { items: true, user: true },
+    }),
+    // Orders that aren't paid yet — open invoices and ones that may be stuck
+    // because an IPN webhook never arrived. Surfaced so an admin can pull the
+    // real status from NOWPayments (or mark paid by hand).
+    prisma.order.findMany({
+      where: { status: { notIn: PAID_STATUSES } },
       orderBy: { createdAt: "desc" },
       take: 50,
       include: { items: true, user: true },
@@ -98,6 +108,65 @@ export default async function AdminPage() {
                     </td>
                     <td className="p-3 text-right">
                       <DeleteOrderButton
+                        orderId={o.id}
+                        orderNumber={orderNumber}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2 className="mb-2 mt-10 font-serif text-2xl font-bold text-navy">
+        Pending &amp; Unpaid Orders
+      </h2>
+      <p className="mb-4 text-sm text-zinc-500">
+        Orders awaiting payment, or that may be stuck because a payment
+        notification never arrived. Use <strong>Sync status</strong> to pull the
+        real status from NOWPayments; use <strong>Mark paid</strong> only after
+        you&apos;ve confirmed the funds arrived.
+      </p>
+      {pendingOrders.length === 0 ? (
+        <p className="text-zinc-500">No pending orders.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-xl border border-black/10 bg-white">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-black/10 text-zinc-500">
+              <tr>
+                <th className="p-3">Order</th>
+                <th className="p-3">Customer</th>
+                <th className="p-3">Date</th>
+                <th className="p-3">Status</th>
+                <th className="p-3 text-right">Total</th>
+                <th className="p-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-black/5">
+              {pendingOrders.map((o) => {
+                const orderNumber = o.id.slice(-8).toUpperCase();
+                return (
+                  <tr key={o.id} className="hover:bg-zinc-50">
+                    <td className="p-3">
+                      <Link
+                        href={`/order/${o.id}`}
+                        className="font-mono text-navy hover:underline"
+                      >
+                        #{orderNumber}
+                      </Link>
+                    </td>
+                    <td className="p-3">{o.user.email}</td>
+                    <td className="p-3">{formatDate(o.createdAt)}</td>
+                    <td className="p-3 capitalize">
+                      {o.status.replace(/_/g, " ")}
+                    </td>
+                    <td className="p-3 text-right font-semibold">
+                      {formatPrice(o.totalCents)}
+                    </td>
+                    <td className="p-3 text-right">
+                      <OrderStatusActions
                         orderId={o.id}
                         orderNumber={orderNumber}
                       />
