@@ -52,8 +52,13 @@ export default async function RootLayout({
       <body className="flex min-h-full flex-col">
         <AuthProvider initialUser={user}>
           <CartProvider>
+            <a href="#main-content" className="skip-link">
+              Skip to content
+            </a>
             <Header />
-            <main className="flex-1">{children}</main>
+            <main id="main-content" className="flex-1">
+              {children}
+            </main>
             <Footer />
           </CartProvider>
         </AuthProvider>

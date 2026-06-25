@@ -2,6 +2,8 @@ import Link from "next/link";
 
 export const metadata = {
   title: "About | Golden Triangle Peptides",
+  description:
+    "Golden Triangle Peptides supplies research-grade peptides with independent third-party purity testing. Learn about our quality standards and mission.",
 };
 
 export default function AboutPage() {

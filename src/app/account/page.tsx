@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { formatPrice, formatDate } from "@/lib/format";
 import CancelOrderButton from "@/components/CancelOrderButton";
 import DeleteOrderButton from "@/components/DeleteOrderButton";
+import ChangePasswordForm from "@/components/ChangePasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -111,6 +112,14 @@ export default async function AccountPage() {
           ))}
         </div>
       )}
+
+      <h2 className="mb-4 mt-12 font-serif text-2xl font-bold text-navy">
+        Account Settings
+      </h2>
+      <div className="rounded-xl border border-black/10 bg-white p-6">
+        <h3 className="mb-4 font-semibold text-navy">Change password</h3>
+        <ChangePasswordForm />
+      </div>
     </div>
   );
 }

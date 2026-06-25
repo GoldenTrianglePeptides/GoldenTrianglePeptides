@@ -34,3 +34,29 @@ body {
   background: var(--gold-light);
   color: var(--navy-dark);
 }
+
+/* Visible keyboard-focus indicator for accessibility. Many inputs set
+   `outline-none` and only change border color on focus (a weak, low-contrast
+   cue); this restores a clear ring for keyboard users without affecting mouse
+   clicks (:focus-visible only matches keyboard/assistive focus). */
+:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Skip-to-content link: visually hidden until focused. */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 100;
+  background: var(--navy);
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 0.5rem;
+}

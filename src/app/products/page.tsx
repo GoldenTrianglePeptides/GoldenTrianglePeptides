@@ -9,6 +9,8 @@ export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Shop Research Peptides | Golden Triangle Peptides",
+  description:
+    "Browse research-grade peptides with verified purity — filter by category, price, and availability. For laboratory research use only.",
 };
 
 type SP = {
