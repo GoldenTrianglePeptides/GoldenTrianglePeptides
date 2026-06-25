@@ -80,7 +80,7 @@ export default async function OrderPage({
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <OrderStatusWatcher status={order.status} />
+      <OrderStatusWatcher orderId={order.id} status={order.status} />
 
       {isPaid && (
         <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-center">
