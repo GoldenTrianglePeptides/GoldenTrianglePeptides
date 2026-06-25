@@ -4,6 +4,12 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import * as nowpayments from "@/lib/nowpayments";
 import { SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
+import {
+  reserveStock,
+  releaseOrderStock,
+  InsufficientStockError,
+} from "@/lib/inventory";
+import { reportError } from "@/lib/observability";
 
 /**
  * Resolve the public origin used to build payment redirect/callback URLs.
@@ -170,6 +176,22 @@ export async function POST(request: Request) {
     lineItems.length
   } item${lineItems.length === 1 ? "" : "s"})`;
 
+  // Reserve stock atomically before opening the order so two concurrent
+  // checkouts can't both sell the last unit. The earlier per-item check gives a
+  // nice message in the common case; this is the race-safe guard. Released again
+  // on cancel/expire/fail (and just below if the invoice can't be opened).
+  try {
+    await reserveStock(lineItems);
+  } catch (err) {
+    if (err instanceof InsufficientStockError) {
+      return NextResponse.json(
+        { error: `${err.itemName} just sold out. Please adjust your cart.` },
+        { status: 409 },
+      );
+    }
+    throw err;
+  }
+
   const order = await prisma.order.create({
     data: {
       userId: user.id,
@@ -182,6 +204,7 @@ export async function POST(request: Request) {
       shippingState: shipping.state,
       shippingZip: shipping.zip,
       paymentProvider: "nowpayments",
+      stockReserved: true,
       items: { create: lineItems },
     },
   });
@@ -210,8 +233,9 @@ export async function POST(request: Request) {
       invoiceUrl: invoice.invoiceUrl,
     });
   } catch (err) {
-    // Couldn't open an invoice — mark the order failed and surface an error.
-    console.error("NOWPayments invoice creation failed:", err);
+    // Couldn't open an invoice — give the reserved stock back and mark failed.
+    reportError("checkout.invoice", err, { orderId: order.id });
+    await releaseOrderStock(order.id);
     await prisma.order.update({
       where: { id: order.id },
       data: { status: "failed" },

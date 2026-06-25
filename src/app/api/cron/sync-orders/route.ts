@@ -3,6 +3,8 @@ import { prisma } from "@/lib/db";
 import * as nowpayments from "@/lib/nowpayments";
 import { siteUrl } from "@/lib/site";
 import { reconcileOrder } from "@/lib/reconcile";
+import { releaseOrderStock } from "@/lib/inventory";
+import { reportError } from "@/lib/observability";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,21 +73,40 @@ async function run(): Promise<Response> {
   try {
     payments = await nowpayments.fetchPaymentsSince(cutoff);
   } catch (err) {
-    console.error("[cron] list payments failed:", err);
+    reportError("cron.syncOrders.list", err);
     return Response.json({ ok: false, reason: "NOWPayments lookup failed." });
   }
 
+  // Abandoned-checkout TTL: an order still awaiting payment this long after
+  // creation is treated as expired so its reserved stock is returned. This is
+  // the backstop for when NOWPayments never sends an "expired" webhook.
+  const abandonedBefore = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
   const origin = siteUrl();
   let updated = 0;
+  let expired = 0;
   for (const order of orders) {
     const payment = nowpayments.pickLatestPaymentForOrder(payments, order.id);
     try {
       const result = await reconcileOrder(order, origin, payment);
       if (result.changed) updated += 1;
+
+      // If it's still unpaid and old, expire it and release the reserved stock.
+      if (
+        result.status === "awaiting_payment" &&
+        order.createdAt < abandonedBefore
+      ) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { status: "expired" },
+        });
+        await releaseOrderStock(order.id);
+        expired += 1;
+      }
     } catch (err) {
-      console.error(`[cron] reconcile failed for order ${order.id}:`, err);
+      reportError("cron.syncOrders", err, { orderId: order.id });
     }
   }
 
-  return Response.json({ ok: true, checked: orders.length, updated });
+  return Response.json({ ok: true, checked: orders.length, updated, expired });
 }

@@ -6,6 +6,7 @@ import {
 } from "@/lib/nowpayments";
 import { settleOrderPaid } from "@/lib/fulfillment";
 import { isSettledPaid } from "@/lib/orderStatus";
+import { releaseOrderStock } from "@/lib/inventory";
 
 function resolveSiteOrigin(request: Request): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -137,6 +138,11 @@ export async function POST(request: Request) {
       paymentRef: payload.payment_id ? String(payload.payment_id) : order.paymentRef,
     },
   });
+
+  // A dead order releases its reserved stock back to inventory.
+  if (nextStatus === "failed" || nextStatus === "expired") {
+    await releaseOrderStock(order.id);
+  }
 
   return new Response("OK", { status: 200 });
 }
