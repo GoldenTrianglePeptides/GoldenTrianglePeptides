@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import * as nowpayments from "@/lib/nowpayments";
 import { siteUrl } from "@/lib/site";
 import { reconcileOrder } from "@/lib/reconcile";
+import { isSameOrigin } from "@/lib/http";
 
 // Needs Node (downstream crypto/email) and must never be cached.
 export const runtime = "nodejs";
@@ -17,9 +18,13 @@ export const dynamic = "force-dynamic";
  * (stock + receipt) as the webhook, exactly once.
  */
 export async function POST(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Cross-origin request" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user?.isAdmin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

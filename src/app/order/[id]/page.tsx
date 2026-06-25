@@ -6,13 +6,13 @@ import { formatPrice, formatDate, carrierTrackingUrl } from "@/lib/format";
 import OrderStatusWatcher from "./OrderStatusWatcher";
 import AdminShippingControls from "./AdminShippingControls";
 import CancelOrderButton from "@/components/CancelOrderButton";
+import {
+  PAID_STATUSES,
+  FAILED_STATUSES,
+  SHIPPING_FLAT_CENTS,
+} from "@/lib/orderStatus";
 
 export const dynamic = "force-dynamic";
-
-const SHIPPING_FLAT_CENTS = 1000;
-
-const PAID_STATUSES = ["paid", "processing", "shipped", "delivered"];
-const FAILED_STATUSES = ["failed", "expired", "cancelled"];
 
 function humanizeStatus(status: string): string {
   return status.replace(/_/g, " ");

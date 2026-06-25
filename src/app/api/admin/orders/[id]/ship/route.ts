@@ -4,6 +4,9 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { sendShippingNotification } from "@/lib/email";
 import { SHIPPING_CARRIERS } from "@/lib/format";
+import { siteUrl } from "@/lib/site";
+import { SHIPPABLE_STATUSES } from "@/lib/orderStatus";
+import { isSameOrigin } from "@/lib/http";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,12 +18,6 @@ const schema = z.object({
   notify: z.boolean().optional().default(true),
 });
 
-function resolveOrigin(request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (configured) return configured.replace(/\/$/, "");
-  return new URL(request.url).origin;
-}
-
 /**
  * Admin-only: mark an order shipped (storing tracking info) and optionally
  * email the customer a shipping notification.
@@ -29,6 +26,10 @@ export async function POST(
   request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Cross-origin request" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -63,7 +64,9 @@ export async function POST(
   }
 
   // Guard against shipping something that was never paid for.
-  const shippable = ["paid", "processing", "shipped"].includes(order.status);
+  const shippable = (SHIPPABLE_STATUSES as readonly string[]).includes(
+    order.status,
+  );
   if (!shippable) {
     return NextResponse.json(
       { error: `Can't ship an order that is "${order.status}".` },
@@ -88,7 +91,7 @@ export async function POST(
       orderNumber: updated.id.slice(-8).toUpperCase(),
       trackingNumber: updated.trackingNumber,
       carrier: updated.trackingCarrier,
-      orderUrl: `${resolveOrigin(request)}/order/${updated.id}`,
+      orderUrl: `${siteUrl()}/order/${updated.id}`,
     });
   }
 

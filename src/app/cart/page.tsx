@@ -4,8 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice } from "@/lib/format";
-
-const SHIPPING_FLAT_CENTS = 1000;
+import { SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, subtotalCents, ready } = useCart();

@@ -1,20 +1,8 @@
 import type { Order } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { sendOrderReceipt } from "@/lib/email";
-
-// Mirrors the value used at checkout; if shipping ever varies, snapshot it on
-// the order instead of re-deriving it here.
-const SHIPPING_FLAT_CENTS = 1000;
-
-// Once an order is paid or being fulfilled, nothing should move it backward.
-// Shared by the webhook and the admin status-sync / manual-paid actions so they
-// all agree on what "already settled" means.
-export const SETTLED_PAID_STATUSES = new Set([
-  "paid",
-  "processing",
-  "shipped",
-  "delivered",
-]);
+import { reportError } from "@/lib/observability";
+import { SETTLED_PAID_STATUSES, SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
 
 /**
  * Settle an order as paid and run the one-time fulfillment side effects:
@@ -42,6 +30,7 @@ export async function settleOrderPaid(
   // money received wins — because cancelled isn't in SETTLED_PAID_STATUSES.)
   const { count } = await prisma.order.updateMany({
     where: { id: order.id, status: { notIn: [...SETTLED_PAID_STATUSES] } },
+    // SETTLED_PAID_STATUSES is a readonly array; spread to a mutable one for Prisma.
     data: {
       status: "paid",
       ...(opts.paymentStatus ? { paymentStatus: opts.paymentStatus } : {}),
@@ -76,7 +65,7 @@ export async function settleOrderPaid(
       });
     }
   } catch (err) {
-    console.error("[fulfillment] Failed to decrement stock:", err);
+    reportError("fulfillment.stock", err, { orderId: order.id });
   }
 
   try {
@@ -106,6 +95,6 @@ export async function settleOrderPaid(
       orderUrl: `${opts.siteOrigin}/order/${order.id}`,
     });
   } catch (err) {
-    console.error("[fulfillment] Failed to enqueue receipt:", err);
+    reportError("fulfillment.receipt", err, { orderId: order.id });
   }
 }

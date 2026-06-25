@@ -4,7 +4,8 @@ import {
   verifyIpnSignature,
   mapPaymentStatusToOrderStatus,
 } from "@/lib/nowpayments";
-import { SETTLED_PAID_STATUSES, settleOrderPaid } from "@/lib/fulfillment";
+import { settleOrderPaid } from "@/lib/fulfillment";
+import { isSettledPaid } from "@/lib/orderStatus";
 
 function resolveSiteOrigin(request: Request): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
 
   // Already paid / being fulfilled: never move it backward, just record the
   // latest raw status and stop.
-  if (SETTLED_PAID_STATUSES.has(order.status)) {
+  if (isSettledPaid(order.status)) {
     await prisma.order.update({
       where: { id: order.id },
       data: { paymentStatus },

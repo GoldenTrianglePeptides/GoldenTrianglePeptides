@@ -1,14 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { isDeletable } from "@/lib/orderStatus";
+import { isSameOrigin } from "@/lib/http";
 
 export const dynamic = "force-dynamic";
-
-// Statuses a customer is allowed to permanently remove from their own order
-// history. Only dead, never-paid orders — anything paid (or still awaiting
-// payment) stays so there's a record and the customer can't hide an unpaid
-// order mid-checkout.
-const DELETABLE_STATUSES = ["cancelled", "failed", "expired"];
 
 /**
  * Delete one of the customer's own orders from their history. The owner (or an
@@ -16,9 +12,13 @@ const DELETABLE_STATUSES = ["cancelled", "failed", "expired"];
  * still-pending orders can't be deleted here. Items cascade-delete via schema.
  */
 export async function DELETE(
-  _request: Request,
+  request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
+  if (!isSameOrigin(request)) {
+    return NextResponse.json({ error: "Cross-origin request" }, { status: 403 });
+  }
+
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
@@ -32,7 +32,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
 
-  if (!DELETABLE_STATUSES.includes(order.status)) {
+  if (!isDeletable(order.status)) {
     return NextResponse.json(
       {
         error:

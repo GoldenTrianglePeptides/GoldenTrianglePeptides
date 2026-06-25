@@ -1,7 +1,8 @@
 import type { Order } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import * as nowpayments from "@/lib/nowpayments";
-import { SETTLED_PAID_STATUSES, settleOrderPaid } from "@/lib/fulfillment";
+import { settleOrderPaid } from "@/lib/fulfillment";
+import { isSettledPaid } from "@/lib/orderStatus";
 
 export type ReconcileResult = {
   status: string;
@@ -25,7 +26,7 @@ export async function reconcileOrder(
   payment?: nowpayments.NowPaymentsPayment | null,
 ): Promise<ReconcileResult> {
   // Already paid / being fulfilled — never move it backward.
-  if (SETTLED_PAID_STATUSES.has(order.status)) {
+  if (isSettledPaid(order.status)) {
     return { status: order.status, changed: false, note: "Order is already paid." };
   }
 
