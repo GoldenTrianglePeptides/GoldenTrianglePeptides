@@ -62,6 +62,8 @@ model Product {
   createdAt   DateTime         @default(now())
   variants    ProductVariant[]
   orderItems  OrderItem[]
+
+  @@index([category])
 }
 
 /// Size/price options a customer can pick when buying a product.
@@ -115,6 +117,10 @@ model Order {
   reminderSentAt  DateTime?
   createdAt       DateTime    @default(now())
   items           OrderItem[]
+
+  @@index([userId])
+  @@index([status, createdAt])
+  @@index([createdAt])
 }
 
 model OrderItem {
@@ -128,4 +134,8 @@ model OrderItem {
   name       String // snapshot at time of order, includes variant label
   priceCents Int
   quantity   Int
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([variantId])
 }

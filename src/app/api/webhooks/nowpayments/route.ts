@@ -81,6 +81,16 @@ export async function POST(request: Request) {
     if (typeof payload.price_amount === "number") {
       const expectedUsd = order.totalCents / 100;
       if (Math.abs(payload.price_amount - expectedUsd) > 0.01) {
+        // Wrong amount: don't resurrect a cancelled/expired order into "partial"
+        // — that would silently reopen it. Only record the raw status and leave
+        // it for an admin to review.
+        if (order.status === "cancelled") {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { paymentStatus },
+          });
+          return new Response("Stays cancelled", { status: 200 });
+        }
         await prisma.order.update({
           where: { id: order.id },
           data: { status: "partial", paymentStatus },

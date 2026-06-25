@@ -89,7 +89,7 @@ export default async function Home() {
                 alt="Golden Triangle Peptides"
                 width={2400}
                 height={1960}
-                preload
+                priority
                 className="h-auto w-full"
               />
             </div>
