@@ -160,6 +160,18 @@ export async function fetchLatestPaymentForOrder(
   orderId: string,
   opts?: { since?: Date },
 ): Promise<NowPaymentsPayment | null> {
+  const payments = await fetchPaymentsSince(opts?.since);
+  return pickLatestPaymentForOrder(payments, orderId);
+}
+
+/**
+ * Fetch the account's payments (optionally since a date), one auth + one list
+ * request. Used by the cron job to reconcile many orders without re-querying
+ * per order. Requires `canQueryPayments()`.
+ */
+export async function fetchPaymentsSince(
+  since?: Date,
+): Promise<NowPaymentsPayment[]> {
   const apiKey = process.env.NOWPAYMENTS_API_KEY;
   if (!apiKey) throw new Error("NOWPAYMENTS_API_KEY is not set");
 
@@ -171,8 +183,8 @@ export async function fetchLatestPaymentForOrder(
     sortBy: "created_at",
     orderBy: "desc",
   });
-  if (opts?.since) {
-    params.set("dateFrom", opts.since.toISOString().slice(0, 10));
+  if (since) {
+    params.set("dateFrom", since.toISOString().slice(0, 10));
   }
 
   const res = await fetch(`${API_BASE}/payment/?${params.toString()}`, {
@@ -190,11 +202,19 @@ export async function fetchLatestPaymentForOrder(
   }
 
   const data = (await res.json()) as { data?: NowPaymentsPayment[] };
-  const matches = (data.data ?? []).filter((p) => p.order_id === orderId);
-  if (matches.length === 0) return null;
+  return data.data ?? [];
+}
 
-  // The list is sorted newest-first, but prefer a finished payment if the order
-  // was paid across more than one attempt.
+/**
+ * From a list of payments, pick the one for the given order — preferring a
+ * finished payment if the order was paid across more than one attempt.
+ */
+export function pickLatestPaymentForOrder(
+  payments: NowPaymentsPayment[],
+  orderId: string,
+): NowPaymentsPayment | null {
+  const matches = payments.filter((p) => p.order_id === orderId);
+  if (matches.length === 0) return null;
   return matches.find((p) => p.payment_status === "finished") ?? matches[0];
 }
 

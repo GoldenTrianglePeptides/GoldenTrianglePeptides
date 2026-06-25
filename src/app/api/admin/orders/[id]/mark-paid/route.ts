@@ -1,16 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
+import { siteUrl } from "@/lib/site";
 import { SETTLED_PAID_STATUSES, settleOrderPaid } from "@/lib/fulfillment";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function resolveSiteOrigin(request: Request): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (configured) return configured.replace(/\/$/, "");
-  return new URL(request.url).origin;
-}
 
 /**
  * Admin-only manual override: mark an order paid by hand. Use this only after
@@ -20,7 +15,7 @@ function resolveSiteOrigin(request: Request): string {
  * last-resort fallback when the API can't be queried.
  */
 export async function POST(
-  request: Request,
+  _request: Request,
   ctx: { params: Promise<{ id: string }> },
 ) {
   const user = await getCurrentUser();
@@ -45,7 +40,7 @@ export async function POST(
   await settleOrderPaid(order, {
     paymentStatus: "manually_marked_paid",
     paymentRef: order.paymentRef,
-    siteOrigin: resolveSiteOrigin(request),
+    siteOrigin: siteUrl(),
   });
 
   return NextResponse.json({ ok: true, status: "paid" });
