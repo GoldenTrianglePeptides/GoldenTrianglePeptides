@@ -121,6 +121,9 @@ model Order {
   // false). stockReleased makes the restock idempotent across cancel/expire.
   stockReserved   Boolean     @default(false)
   stockReleased   Boolean     @default(false)
+  // Last time we pulled this order's status from NOWPayments on view; used to
+  // throttle the auto-sync so a polling order page doesn't hammer the API.
+  lastSyncedAt    DateTime?
   createdAt       DateTime    @default(now())
   items           OrderItem[]
 
