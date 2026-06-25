@@ -6,11 +6,26 @@ import { prisma } from "./db";
 const SESSION_COOKIE = "gtp_session";
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
 
-// In production, set AUTH_SECRET to a long random string.
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET ||
+// Session signing key. AUTH_SECRET MUST be set to a long random string in
+// production — we fail closed rather than fall back to a known secret, because
+// a hardcoded fallback would let anyone forge a session (including an admin
+// one). The dev default is only ever used outside production.
+function resolveSecret(): Uint8Array {
+  const configured = process.env.AUTH_SECRET?.trim();
+  if (configured && configured.length >= 32) {
+    return new TextEncoder().encode(configured);
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "AUTH_SECRET must be set to a strong (32+ character) random string in production.",
+    );
+  }
+  return new TextEncoder().encode(
     "dev-insecure-secret-change-me-in-production-please-0123456789",
-);
+  );
+}
+
+const secret = resolveSecret();
 
 export type SessionUser = {
   id: string;
@@ -58,7 +73,10 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, secret);
+    // Pin the algorithm — we only ever sign with HS256, so reject anything else.
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ["HS256"],
+    });
     const userId = payload.sub;
     if (!userId || typeof userId !== "string") return null;
 

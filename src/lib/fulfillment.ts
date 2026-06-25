@@ -34,14 +34,24 @@ export async function settleOrderPaid(
     siteOrigin: string;
   },
 ): Promise<void> {
-  await prisma.order.update({
-    where: { id: order.id },
+  // Flip to paid atomically: the conditional WHERE means only the first caller
+  // that transitions a not-yet-settled order proceeds to run the side effects.
+  // Concurrent webhook/cron/sync deliveries that lose this race update zero rows
+  // and return early, so stock is never double-decremented and the receipt is
+  // sent exactly once. (A still-`cancelled` order is allowed through here —
+  // money received wins — because cancelled isn't in SETTLED_PAID_STATUSES.)
+  const { count } = await prisma.order.updateMany({
+    where: { id: order.id, status: { notIn: [...SETTLED_PAID_STATUSES] } },
     data: {
       status: "paid",
       ...(opts.paymentStatus ? { paymentStatus: opts.paymentStatus } : {}),
       ...(opts.paymentRef ? { paymentRef: opts.paymentRef } : {}),
     },
   });
+  if (count === 0) {
+    // Another concurrent settle already paid/fulfilled this order — don't repeat.
+    return;
+  }
 
   const items = await prisma.orderItem.findMany({
     where: { orderId: order.id },

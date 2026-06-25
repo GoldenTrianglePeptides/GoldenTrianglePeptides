@@ -51,6 +51,18 @@ export async function reconcileOrder(
     if (typeof p.price_amount === "number") {
       const expectedUsd = order.totalCents / 100;
       if (Math.abs(p.price_amount - expectedUsd) > 0.01) {
+        // Wrong amount: don't resurrect a cancelled order into "partial".
+        if (order.status === "cancelled") {
+          await prisma.order.update({
+            where: { id: order.id },
+            data: { paymentStatus: p.payment_status },
+          });
+          return {
+            status: order.status,
+            changed: false,
+            note: "Payment amount doesn't match — order stays cancelled.",
+          };
+        }
         await prisma.order.update({
           where: { id: order.id },
           data: { status: "partial", paymentStatus: p.payment_status },

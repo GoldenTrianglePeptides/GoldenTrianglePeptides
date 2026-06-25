@@ -287,10 +287,17 @@ async function main() {
   // never seeded with a publicly known default password.
   const adminEmail =
     process.env.ADMIN_EMAIL || "admin@goldentrianglepeptides.com";
+  // Never seed a guessable admin password into a live database. In production
+  // we fail closed; locally we fall back to a clearly-insecure default.
+  if (!process.env.ADMIN_PASSWORD && process.env.NODE_ENV === "production") {
+    throw new Error(
+      "ADMIN_PASSWORD must be set when seeding in production. Refusing to create an admin with a default password.",
+    );
+  }
   const adminPassword = process.env.ADMIN_PASSWORD || "admin1234";
   if (!process.env.ADMIN_PASSWORD) {
     console.warn(
-      "⚠ ADMIN_PASSWORD not set — using an insecure default. Set ADMIN_EMAIL and ADMIN_PASSWORD before going live.",
+      "⚠ ADMIN_PASSWORD not set — using an insecure default (local/dev only). Set ADMIN_EMAIL and ADMIN_PASSWORD before going live.",
     );
   }
   const adminHash = await bcrypt.hash(adminPassword, 10);
