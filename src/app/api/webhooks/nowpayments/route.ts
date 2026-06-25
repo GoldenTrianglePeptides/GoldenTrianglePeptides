@@ -4,11 +4,7 @@ import {
   verifyIpnSignature,
   mapPaymentStatusToOrderStatus,
 } from "@/lib/nowpayments";
-import { sendOrderReceipt } from "@/lib/email";
-
-// Mirrors the value used at checkout; if shipping ever varies, snapshot it on
-// the order instead of re-deriving it here.
-const SHIPPING_FLAT_CENTS = 1000;
+import { SETTLED_PAID_STATUSES, settleOrderPaid } from "@/lib/fulfillment";
 
 function resolveSiteOrigin(request: Request): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -20,17 +16,6 @@ function resolveSiteOrigin(request: Request): string {
 export const runtime = "nodejs";
 // Never cache a webhook.
 export const dynamic = "force-dynamic";
-
-// Once an order is paid or being fulfilled, a later (possibly out-of-order)
-// webhook must never move it backwards. Note "cancelled" is deliberately NOT
-// here: a genuinely completed payment can still settle a cancelled order
-// (money received always wins) — see the logic below.
-const SETTLED_PAID_STATUSES = new Set([
-  "paid",
-  "processing",
-  "shipped",
-  "delivered",
-]);
 
 /**
  * NOWPayments IPN (Instant Payment Notification) endpoint.
@@ -116,6 +101,23 @@ export async function POST(request: Request) {
     return new Response("Stays cancelled", { status: 200 });
   }
 
+  // When an order is confirmed paid, settle it: flip to paid, decrement tracked
+  // inventory, and email the receipt. This only runs on the transition to paid
+  // (a repeat "finished" webhook hits the SETTLED_PAID short-circuit above), so
+  // stock isn't double-decremented. Side-effect failures are logged but never
+  // fail the webhook.
+  if (nextStatus === "paid") {
+    await settleOrderPaid(order, {
+      paymentStatus,
+      paymentRef: payload.payment_id
+        ? String(payload.payment_id)
+        : order.paymentRef,
+      siteOrigin: resolveSiteOrigin(request),
+    });
+    return new Response("OK", { status: 200 });
+  }
+
+  // Still in flight or a non-paid terminal state — just record the latest status.
   await prisma.order.update({
     where: { id: order.id },
     data: {
@@ -124,68 +126,6 @@ export async function POST(request: Request) {
       paymentRef: payload.payment_id ? String(payload.payment_id) : order.paymentRef,
     },
   });
-
-  // When an order is confirmed paid, decrement tracked inventory and email the
-  // receipt. This only runs on the transition to paid (a repeat "finished"
-  // webhook hits the SETTLED_PAID short-circuit above), so stock isn't
-  // double-decremented. Failures are logged but never fail the webhook.
-  if (nextStatus === "paid") {
-    const items = await prisma.orderItem.findMany({
-      where: { orderId: order.id },
-    });
-
-    // Decrement tracked stock; flip a variant out of stock when it hits zero.
-    try {
-      for (const item of items) {
-        if (!item.variantId) continue;
-        const variant = await prisma.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { stockQty: true },
-        });
-        if (!variant || variant.stockQty === null) continue; // untracked
-        const remaining = Math.max(0, variant.stockQty - item.quantity);
-        await prisma.productVariant.update({
-          where: { id: item.variantId },
-          data: {
-            stockQty: remaining,
-            ...(remaining === 0 ? { inStock: false } : {}),
-          },
-        });
-      }
-    } catch (err) {
-      console.error("[webhook] Failed to decrement stock:", err);
-    }
-
-    try {
-      const subtotalCents = items.reduce(
-        (sum, i) => sum + i.priceCents * i.quantity,
-        0,
-      );
-      await sendOrderReceipt({
-        to: order.shippingEmail,
-        orderId: order.id,
-        orderNumber: order.id.slice(-8).toUpperCase(),
-        items: items.map((i) => ({
-          name: i.name,
-          priceCents: i.priceCents,
-          quantity: i.quantity,
-        })),
-        subtotalCents,
-        shippingCents: SHIPPING_FLAT_CENTS,
-        totalCents: order.totalCents,
-        shipping: {
-          name: order.shippingName,
-          address: order.shippingAddress,
-          city: order.shippingCity,
-          state: order.shippingState,
-          zip: order.shippingZip,
-        },
-        orderUrl: `${resolveSiteOrigin(request)}/order/${order.id}`,
-      });
-    } catch (err) {
-      console.error("[webhook] Failed to enqueue receipt:", err);
-    }
-  }
 
   return new Response("OK", { status: 200 });
 }
