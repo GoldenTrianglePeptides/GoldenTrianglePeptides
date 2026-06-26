@@ -65,6 +65,7 @@ export async function settleOrderPaid(
       })),
       subtotalCents,
       shippingCents: SHIPPING_FLAT_CENTS,
+      discountCents: order.discountCents,
       totalCents: order.totalCents,
       shipping: {
         name: order.shippingName,

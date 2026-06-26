@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import NewsletterSignup from "@/components/NewsletterSignup";
 
 export default function Footer() {
   return (
@@ -34,6 +35,9 @@ export default function Footer() {
             support@goldentrianglepeptide.com
           </a>
           <p className="text-sm text-white/60">Mon–Fri · 9am–5pm CT</p>
+          <div className="mt-5">
+            <NewsletterSignup />
+          </div>
         </div>
 
         <div>
