@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
 import { siteUrl } from "@/lib/site";
+import { vialImageFor } from "@/lib/productVial";
 import AddToCartButton from "@/components/AddToCartButton";
 import ProductCard from "@/components/ProductCard";
 import ProductDetailTabs, {
@@ -135,7 +136,7 @@ export default async function ProductPage({
               text remains interactive. */}
           <div className="pointer-events-none absolute bottom-0 right-0 z-0 h-3/5 w-3/5">
             <Image
-              src={product.imageUrl}
+              src={vialImageFor(product.name, product.imageUrl)}
               alt={product.name}
               fill
               sizes="(max-width: 768px) 60vw, 30vw"
