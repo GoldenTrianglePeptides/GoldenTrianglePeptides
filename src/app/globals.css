@@ -45,6 +45,41 @@ body {
   border-radius: 2px;
 }
 
+/* Blog article body */
+.article-body {
+  color: #3f3f46;
+  line-height: 1.75;
+}
+.article-body h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 1.75rem 0 0.5rem;
+}
+.article-body p {
+  margin: 0 0 1rem;
+}
+.article-body ul,
+.article-body ol {
+  margin: 0 0 1rem 1.25rem;
+  list-style: revert;
+}
+.article-body li {
+  margin: 0.25rem 0;
+}
+.article-body a {
+  color: var(--navy);
+  text-decoration: underline;
+}
+.article-body .ruo-note {
+  margin-top: 1.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  padding-top: 1rem;
+  font-size: 0.85rem;
+  color: #71717a;
+}
+
 /* Skip-to-content link: visually hidden until focused. */
 .skip-link {
   position: absolute;
