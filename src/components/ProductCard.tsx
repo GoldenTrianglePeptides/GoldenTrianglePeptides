@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/format";
+import { vialImageFor } from "@/lib/productVial";
 
 type Variant = {
   label: string;
@@ -127,7 +128,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         {/* Vial photo, overlapping the lower-right corner */}
         <div className="pointer-events-none absolute bottom-0 right-1 h-[80%] w-[40%]">
           <Image
-            src={product.imageUrl}
+            src={vialImageFor(product.name, product.imageUrl)}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 40vw, 15vw"
