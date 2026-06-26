@@ -27,6 +27,14 @@ export default function CheckoutForm({
     state: "",
     zip: "",
   });
+  const [discountCode, setDiscountCode] = useState("");
+
+  // Optimistic preview only — the server validates the code and is the source
+  // of truth for the actual charge.
+  const WELCOME_PERCENT = 10;
+  const estDiscount = discountCode.trim()
+    ? Math.round((subtotalCents * WELCOME_PERCENT) / 100)
+    : 0;
 
   // Send shoppers with an empty cart back to the shop.
   useEffect(() => {
@@ -54,6 +62,7 @@ export default function CheckoutForm({
             quantity: i.quantity,
           })),
           shipping: form,
+          discountCode: discountCode.trim() || undefined,
         }),
       });
       const data = await res.json();
@@ -85,7 +94,7 @@ export default function CheckoutForm({
     );
   }
 
-  const total = subtotalCents + SHIPPING_FLAT_CENTS;
+  const total = subtotalCents - estDiscount + SHIPPING_FLAT_CENTS;
   const inputClass =
     "mt-1 w-full rounded-lg border border-black/15 px-3 py-2 outline-none focus:border-navy";
 
@@ -194,11 +203,27 @@ export default function CheckoutForm({
             ))}
           </ul>
           <div className="my-3 border-t border-black/10" />
+          <label className="block text-sm">
+            <span className="text-zinc-500">Discount code (optional)</span>
+            <input
+              value={discountCode}
+              onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+              placeholder="WELCOME-XXXXXX"
+              className="mt-1 w-full rounded-lg border border-black/15 px-3 py-2 text-sm uppercase outline-none focus:border-navy"
+            />
+          </label>
+          <div className="my-3 border-t border-black/10" />
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-zinc-500">Subtotal</span>
               <span>{formatPrice(subtotalCents)}</span>
             </div>
+            {estDiscount > 0 && (
+              <div className="flex justify-between text-green-700">
+                <span>Discount ({WELCOME_PERCENT}%)</span>
+                <span>−{formatPrice(estDiscount)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-zinc-500">Shipping</span>
               <span>{formatPrice(SHIPPING_FLAT_CENTS)}</span>
@@ -207,6 +232,11 @@ export default function CheckoutForm({
               <span>Total</span>
               <span>{formatPrice(total)}</span>
             </div>
+            {estDiscount > 0 && (
+              <p className="text-xs text-zinc-400">
+                Discount applied at payment if the code is valid.
+              </p>
+            )}
           </div>
 
           {error && (

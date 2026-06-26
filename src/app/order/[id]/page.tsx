@@ -186,6 +186,14 @@ export default async function OrderPage({
             <span className="text-zinc-500">Subtotal</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
+          {order.discountCents > 0 && (
+            <div className="flex justify-between text-green-700">
+              <span>
+                Discount{order.discountCode ? ` (${order.discountCode})` : ""}
+              </span>
+              <span>−{formatPrice(order.discountCents)}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span className="text-zinc-500">Shipping</span>
             <span>{formatPrice(SHIPPING_FLAT_CENTS)}</span>

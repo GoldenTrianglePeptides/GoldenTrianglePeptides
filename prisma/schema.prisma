@@ -97,6 +97,9 @@ model Order {
   // Demo orders (no payment processor configured) are created as "paid".
   status          String      @default("awaiting_payment")
   totalCents      Int
+  // Discount applied at checkout (e.g. newsletter first-order code). 0 = none.
+  discountCents   Int         @default(0)
+  discountCode    String?
   shippingName    String
   shippingEmail   String
   shippingAddress String
@@ -147,4 +150,14 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@index([variantId])
+}
+
+/// Newsletter subscribers. Each gets a one-time first-order discount code that
+/// is consumed at checkout.
+model Subscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  discountCode String   @unique
+  discountUsed Boolean  @default(false)
+  createdAt    DateTime @default(now())
 }

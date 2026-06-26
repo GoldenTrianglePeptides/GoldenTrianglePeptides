@@ -101,6 +101,7 @@ export type ReceiptInput = {
   items: ReceiptItem[];
   subtotalCents: number;
   shippingCents: number;
+  discountCents?: number;
   totalCents: number;
   shipping: {
     name: string;
@@ -148,6 +149,14 @@ export async function sendOrderReceipt(input: ReceiptInput): Promise<void> {
         <td style="padding:6px 0;color:#71717a;">Subtotal</td>
         <td align="right" style="padding:6px 0;">${formatPriceCents(input.subtotalCents)}</td>
       </tr>
+      ${
+        input.discountCents && input.discountCents > 0
+          ? `<tr>
+        <td style="padding:6px 0;color:#15803d;">Discount</td>
+        <td align="right" style="padding:6px 0;color:#15803d;">−${formatPriceCents(input.discountCents)}</td>
+      </tr>`
+          : ""
+      }
       <tr>
         <td style="padding:6px 0;color:#71717a;">Shipping</td>
         <td align="right" style="padding:6px 0;">${formatPriceCents(input.shippingCents)}</td>
@@ -183,6 +192,9 @@ export async function sendOrderReceipt(input: ReceiptInput): Promise<void> {
     ),
     ``,
     `Subtotal: ${formatPriceCents(input.subtotalCents)}`,
+    ...(input.discountCents && input.discountCents > 0
+      ? [`Discount: -${formatPriceCents(input.discountCents)}`]
+      : []),
     `Shipping: ${formatPriceCents(input.shippingCents)}`,
     `Total:    ${formatPriceCents(input.totalCents)}`,
     ``,
@@ -434,5 +446,63 @@ export async function sendAbandonedPaymentReminder(
       `[email] Failed to send abandoned-payment reminder for order ${input.orderNumber}:`,
       err,
     );
+  }
+}
+
+/** Welcome email with a one-time first-order discount code. */
+export async function sendWelcomeDiscount(input: {
+  to: string;
+  code: string;
+  percent: number;
+  shopUrl: string;
+}): Promise<void> {
+  const c = client();
+  if (!c) {
+    console.warn(
+      `[email] RESEND_API_KEY not set — skipping welcome email to ${input.to}`,
+    );
+    return;
+  }
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:22px;color:#0a1e3f;">Welcome — here's ${input.percent}% off</h1>
+    <p style="margin:0 0 16px;color:#52525b;">
+      Thanks for joining ${BRAND_NAME}. Use the code below for
+      <strong>${input.percent}% off your first order</strong>.
+    </p>
+    <div style="margin:20px 0;text-align:center;">
+      <span style="display:inline-block;border:2px dashed #d4af37;border-radius:10px;padding:14px 28px;font-family:Georgia,serif;font-size:26px;font-weight:bold;letter-spacing:2px;color:#0a1e3f;">${escapeHtml(input.code)}</span>
+    </div>
+    <div style="margin:24px 0;text-align:center;">
+      <a href="${input.shopUrl}" style="background:#d4af37;color:#0a1e3f;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px;display:inline-block;">Shop Now</a>
+    </div>
+    <p style="margin:24px 0 0;color:#71717a;font-size:13px;">
+      Enter the code at checkout. Valid once. For research use only — not for
+      human or veterinary use.
+    </p>
+  `;
+
+  const text = [
+    `Welcome to ${BRAND_NAME} — ${input.percent}% off your first order`,
+    ``,
+    `Your code: ${input.code}`,
+    `Enter it at checkout. Valid once.`,
+    ``,
+    `Shop: ${input.shopUrl}`,
+  ].join("\n");
+
+  try {
+    await c.emails.send({
+      from: sender(),
+      to: input.to,
+      subject: `Your ${input.percent}% off code — ${BRAND_NAME}`,
+      html: renderShell({
+        preheader: `${input.percent}% off your first order with code ${input.code}`,
+        body,
+      }),
+      text,
+    });
+  } catch (err) {
+    console.error(`[email] Failed to send welcome email to ${input.to}:`, err);
   }
 }

@@ -10,6 +10,7 @@ import {
   InsufficientStockError,
 } from "@/lib/inventory";
 import { reportError } from "@/lib/observability";
+import { welcomeDiscountCents } from "@/lib/discount";
 
 /**
  * Resolve the public origin used to build payment redirect/callback URLs.
@@ -39,6 +40,7 @@ const schema = z.object({
     state: z.string().trim().min(1, "State is required"),
     zip: z.string().trim().min(3, "ZIP/postal code is required"),
   }),
+  discountCode: z.string().trim().toUpperCase().optional(),
 });
 
 
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const { items, shipping } = parsed.data;
+  const { items, shipping, discountCode } = parsed.data;
 
   // Load the real variants from the DB so labels and prices can't be tampered
   // with client-side. Legacy carts may pass a productId in the variantId slot
@@ -150,7 +152,28 @@ export async function POST(request: Request) {
     (sum, i) => sum + i.priceCents * i.quantity,
     0,
   );
-  const total = subtotal + SHIPPING_FLAT_CENTS;
+
+  // Optional newsletter first-order discount. Validate (read-only) here; the
+  // code is consumed only after the invoice is created successfully, so a
+  // sold-out item or a failed payment never wastes the customer's code.
+  let discountCents = 0;
+  let appliedCode: string | null = null;
+  if (discountCode) {
+    const sub = await prisma.subscriber.findFirst({
+      where: { discountCode, discountUsed: false },
+      select: { id: true },
+    });
+    if (!sub) {
+      return NextResponse.json(
+        { error: "That discount code is invalid or has already been used." },
+        { status: 400 },
+      );
+    }
+    discountCents = welcomeDiscountCents(subtotal);
+    appliedCode = discountCode;
+  }
+
+  const total = Math.max(0, subtotal - discountCents) + SHIPPING_FLAT_CENTS;
 
   // --- Payment ---
   // Crypto-only checkout. We create the order as "awaiting_payment", open a
@@ -197,6 +220,8 @@ export async function POST(request: Request) {
       userId: user.id,
       status: "awaiting_payment",
       totalCents: total,
+      discountCents,
+      discountCode: appliedCode,
       shippingName: shipping.name,
       shippingEmail: shipping.email,
       shippingAddress: shipping.address,
@@ -227,6 +252,14 @@ export async function POST(request: Request) {
         paymentUrl: invoice.invoiceUrl,
       },
     });
+
+    // Consume the discount code now that the order + invoice exist.
+    if (appliedCode) {
+      await prisma.subscriber.updateMany({
+        where: { discountCode: appliedCode, discountUsed: false },
+        data: { discountUsed: true },
+      });
+    }
 
     return NextResponse.json({
       orderId: order.id,
