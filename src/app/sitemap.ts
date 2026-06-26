@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/db";
 import { siteUrl } from "@/lib/site";
+import { POSTS } from "@/content/blog";
 
 // Render at request time so the product list reflects the live database and
 // the sitemap never depends on the DB being reachable during the build.
@@ -12,6 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticPaths: { path: string; priority: number }[] = [
     { path: "", priority: 1 },
     { path: "/products", priority: 0.9 },
+    { path: "/blog", priority: 0.7 },
     { path: "/about", priority: 0.6 },
     { path: "/certifications", priority: 0.6 },
     { path: "/contact", priority: 0.5 },
@@ -37,5 +39,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
-  return [...staticRoutes, ...productRoutes];
+  const blogRoutes: MetadataRoute.Sitemap = POSTS.map((p) => ({
+    url: `${base}/blog/${p.slug}`,
+    lastModified: new Date(p.date),
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...productRoutes, ...blogRoutes];
 }
