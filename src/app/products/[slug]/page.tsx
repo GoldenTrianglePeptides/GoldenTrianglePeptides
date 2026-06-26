@@ -1,11 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { formatPrice } from "@/lib/format";
 import { siteUrl } from "@/lib/site";
-import { vialImageFor } from "@/lib/productVial";
-import AddToCartButton from "@/components/AddToCartButton";
+import ProductBuyPanel from "./ProductBuyPanel";
 import ProductCard from "@/components/ProductCard";
 import ProductDetailTabs, {
   type ProductDetailTab,
@@ -61,6 +59,7 @@ export default async function ProductPage({
       ? product.variants.map((v) => ({
           id: v.id,
           label: v.label,
+          sizeMg: v.sizeMg,
           priceCents: v.priceCents,
           inStock: product.inStock && v.inStock,
         }))
@@ -68,6 +67,7 @@ export default async function ProductPage({
           {
             id: product.id, // legacy fallback id
             label: product.sizeMg > 0 ? `${product.sizeMg} mg` : "Default",
+            sizeMg: product.sizeMg,
             priceCents: product.priceCents,
             inStock: product.inStock,
           },
@@ -121,147 +121,21 @@ export default async function ProductPage({
         / <span className="text-navy">{product.name}</span>
       </nav>
 
-      <div className="grid gap-10 md:grid-cols-2">
-        {/* Product label card — each product looks distinct because of its own
-            name / CAS / size / purity, printed onto a clean label with the
-            vial overlaid in the lower-right corner. */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
-          {!product.inStock && (
-            <span className="absolute right-4 top-4 z-10 rounded bg-navy px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-gold-light">
-              Out of stock
-            </span>
-          )}
-
-          {/* Vial overlay (bottom-right). pointer-events-none so the label's
-              text remains interactive. */}
-          <div className="pointer-events-none absolute bottom-0 right-0 z-0 h-3/5 w-3/5">
-            <Image
-              src={vialImageFor(product.name, product.imageUrl)}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 60vw, 30vw"
-              className="object-contain object-right-bottom"
-            />
-          </div>
-
-          {/* Label content */}
-          <div className="relative z-10 flex h-full flex-col gap-5 p-7">
-            <div className="flex items-center gap-2">
-              <Image src="/logo-mark.png" alt="" width={32} height={32} />
-              <span className="text-xs font-bold uppercase tracking-[0.15em] text-navy">
-                Golden Triangle <span className="text-gold">Peptides</span>
-              </span>
-            </div>
-
-            {product.cas && (
-              <p className="text-base font-semibold text-navy">
-                <span className="mr-2 rounded-sm border border-navy/50 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide">
-                  CAS
-                </span>
-                {product.cas}
-              </p>
-            )}
-
-            <h2 className="font-serif text-3xl font-extrabold leading-tight text-navy">
-              {product.name}
-            </h2>
-
-            <p className="text-2xl font-extrabold text-navy">
-              {product.sizeMg > 0 ? `${product.sizeMg} mg` : "Solution"}
-              {variants.length > 1 && (
-                <span className="ml-1 text-sm font-medium text-zinc-500">
-                  · {variants.length} sizes
-                </span>
-              )}
-            </p>
-
-            <div className="mt-auto space-y-2 text-xs font-semibold text-navy/90">
-              <p>
-                <span className="mr-2 rounded-sm border border-navy/50 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide">
-                  Purity
-                </span>
-                {product.purity} HPLC
-              </p>
-              <p>
-                <span className="mr-2 rounded-sm border border-navy/50 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide">
-                  RUO
-                </span>
-                Research use only.
-                <br />
-                Not for human or veterinary use.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Details */}
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-wide text-gold">
-            {product.category}
-          </p>
-          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-navy">
-            {product.name}
-          </h1>
-          {product.cas && (
-            <p className="mt-2 text-sm text-zinc-500">
-              <span className="rounded-sm border border-navy/30 px-1.5 py-0.5 text-[0.65rem] font-bold uppercase text-navy">
-                CAS
-              </span>{" "}
-              <span className="font-semibold text-navy">{product.cas}</span>
-            </p>
-          )}
-          <p className="mt-4 text-3xl font-bold text-navy">{priceLabel}</p>
-
-          <dl className="mt-6 grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
-              <dt className="text-zinc-500">Purity</dt>
-              <dd className="font-semibold text-navy">{product.purity}</dd>
-            </div>
-            <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
-              <dt className="text-zinc-500">Form</dt>
-              <dd className="font-semibold text-navy">
-                {product.sizeMg > 0 ? "Lyophilized powder" : "Solution"}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
-              <dt className="text-zinc-500">Sizes</dt>
-              <dd className="font-semibold text-navy">
-                {variants.map((v) => v.label).join(" · ")}
-              </dd>
-            </div>
-            <div className="rounded-lg border border-black/5 bg-white p-3 shadow-sm">
-              <dt className="text-zinc-500">Availability</dt>
-              <dd
-                className={`font-semibold ${
-                  variants.some((v) => v.inStock)
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {variants.some((v) => v.inStock) ? "In stock" : "Out of stock"}
-              </dd>
-            </div>
-          </dl>
-
-          <div className="mt-8">
-            <AddToCartButton
-              product={{
-                id: product.id,
-                slug: product.slug,
-                name: product.name,
-                imageUrl: product.imageUrl,
-              }}
-              variants={variants}
-            />
-          </div>
-
-          <div className="mt-6 rounded-lg border border-gold/40 bg-gold/5 p-4 text-xs text-navy/80">
-            <strong className="text-navy">Research Use Only.</strong> This
-            product is intended strictly for laboratory research and is not for
-            human or animal consumption.
-          </div>
-        </div>
-      </div>
+      <ProductBuyPanel
+        product={{
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          cas: product.cas,
+          purity: product.purity,
+          sizeMg: product.sizeMg,
+          category: product.category,
+          imageUrl: product.imageUrl,
+          inStock: product.inStock,
+        }}
+        variants={variants}
+        priceLabel={priceLabel}
+      />
 
       {/* Detail tabs — sections without content are omitted automatically. */}
       <section className="mt-12">
