@@ -8,10 +8,10 @@ import { prisma } from "./db";
 //   reset email. Never stored.
 // - The database stores only a SHA-256 hash of the token. A DB leak therefore
 //   cannot be used to take over accounts.
-// - Tokens expire after 30 minutes and are single-use (deleted on first
-//   successful redemption). All older tokens for the same user are deleted
-//   when a new one is issued so a reset link can't be reused after a fresh
-//   one is requested.
+// - Tokens expire after 30 minutes and are single-use: on redemption the row is
+//   marked used (usedAt) and validation rejects any token with usedAt set. All
+//   older tokens for the same user are deleted when a new one is issued so a
+//   reset link can't be reused after a fresh one is requested.
 
 export const RESET_TOKEN_TTL_MINUTES = 30;
 

@@ -153,9 +153,10 @@ export async function POST(request: Request) {
     0,
   );
 
-  // Optional newsletter first-order discount. Validate (read-only) here; the
-  // code is consumed only after the invoice is created successfully, so a
-  // sold-out item or a failed payment never wastes the customer's code.
+  // Optional newsletter first-order discount. Validate (read-only) here for a
+  // clean early error on an obviously-invalid code; it's consumed atomically
+  // just after the order is created (and restored if the invoice fails), so it
+  // can be used exactly once even under concurrent checkouts.
   let discountCents = 0;
   let appliedCode: string | null = null;
   if (discountCode) {
@@ -234,6 +235,27 @@ export async function POST(request: Request) {
     },
   });
 
+  // Consume the discount code atomically now that the order exists. If a
+  // concurrent checkout claimed it first (count === 0), don't silently charge
+  // full price — release the stock, fail this order, and ask them to retry.
+  if (appliedCode) {
+    const { count } = await prisma.subscriber.updateMany({
+      where: { discountCode: appliedCode, discountUsed: false },
+      data: { discountUsed: true },
+    });
+    if (count === 0) {
+      await releaseOrderStock(order.id);
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { status: "failed" },
+      });
+      return NextResponse.json(
+        { error: "That discount code was just used. Remove it and try again." },
+        { status: 409 },
+      );
+    }
+  }
+
   const origin = resolveOrigin(request);
   try {
     const invoice = await nowpayments.createInvoice({
@@ -253,22 +275,21 @@ export async function POST(request: Request) {
       },
     });
 
-    // Consume the discount code now that the order + invoice exist.
-    if (appliedCode) {
-      await prisma.subscriber.updateMany({
-        where: { discountCode: appliedCode, discountUsed: false },
-        data: { discountUsed: true },
-      });
-    }
-
     return NextResponse.json({
       orderId: order.id,
       invoiceUrl: invoice.invoiceUrl,
     });
   } catch (err) {
-    // Couldn't open an invoice — give the reserved stock back and mark failed.
+    // Couldn't open an invoice — give the reserved stock back, return the
+    // discount code so it isn't wasted, and mark the order failed.
     reportError("checkout.invoice", err, { orderId: order.id });
     await releaseOrderStock(order.id);
+    if (appliedCode) {
+      await prisma.subscriber.updateMany({
+        where: { discountCode: appliedCode },
+        data: { discountUsed: false },
+      });
+    }
     await prisma.order.update({
       where: { id: order.id },
       data: { status: "failed" },

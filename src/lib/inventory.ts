@@ -90,3 +90,49 @@ export async function releaseOrderStock(orderId: string): Promise<void> {
     reportError("inventory.release", err, { orderId });
   }
 }
+
+/**
+ * Re-take stock for an order whose reservation was previously released, used
+ * when a cancelled/expired/failed order is revived to paid ("money wins"). The
+ * reclaim is claimed atomically via the stockReleased flag (true -> false) so a
+ * concurrent settle can't double-decrement. If a variant can no longer cover
+ * the quantity (it was sold to someone else after release), stock floors at 0
+ * and the shortfall is reported for admin attention rather than blocking the
+ * already-paid order. No-op when the order's stock wasn't released.
+ */
+export async function reclaimReleasedStock(orderId: string): Promise<void> {
+  const { count } = await prisma.order.updateMany({
+    where: { id: orderId, stockReleased: true },
+    data: { stockReleased: false },
+  });
+  if (count === 0) return; // wasn't released (normal paid order), or already reclaimed
+
+  try {
+    const items = await prisma.orderItem.findMany({ where: { orderId } });
+    for (const item of items) {
+      if (!item.variantId) continue;
+      const variant = await prisma.productVariant.findUnique({
+        where: { id: item.variantId },
+        select: { stockQty: true },
+      });
+      if (!variant || variant.stockQty === null) continue; // untracked
+      if (variant.stockQty < item.quantity) {
+        reportError(
+          "inventory.reclaim.shortfall",
+          new Error("Revived paid order exceeds available stock"),
+          { orderId, variantId: item.variantId, need: item.quantity, have: variant.stockQty },
+        );
+      }
+      const remaining = Math.max(0, variant.stockQty - item.quantity);
+      await prisma.productVariant.update({
+        where: { id: item.variantId },
+        data: {
+          stockQty: remaining,
+          ...(remaining === 0 ? { inStock: false } : {}),
+        },
+      });
+    }
+  } catch (err) {
+    reportError("inventory.reclaim", err, { orderId });
+  }
+}
