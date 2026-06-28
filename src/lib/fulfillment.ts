@@ -2,11 +2,13 @@ import type { Order } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { sendOrderReceipt } from "@/lib/email";
 import { reportError } from "@/lib/observability";
+import { reclaimReleasedStock } from "@/lib/inventory";
 import { SETTLED_PAID_STATUSES, SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
 
 /**
  * Settle an order as paid and email the receipt. Stock was already reserved at
- * checkout, so a paid order just keeps its reservation — no stock change here.
+ * checkout, so a normal paid order keeps its reservation; a revived
+ * (cancelled/expired/failed -> paid) order re-takes the stock it had released.
  *
  * The transition to paid is atomic (conditional updateMany below), so even under
  * concurrent webhook/cron/sync deliveries only the winning caller emails the
@@ -46,8 +48,13 @@ export async function settleOrderPaid(
     where: { orderId: order.id },
   });
 
-  // Stock was already reserved at checkout (see lib/inventory.reserveStock), so
-  // a paid order simply keeps its reservation — nothing to decrement here.
+  // Stock was reserved at checkout, so a normal paid order keeps its
+  // reservation — nothing to decrement. The exception is a "money wins" revival:
+  // if this order had been cancelled/expired/failed, its stock was released back
+  // to the pool, so re-take it now that it's paid. No-op for normal orders.
+  if (order.stockReleased) {
+    await reclaimReleasedStock(order.id);
+  }
 
   try {
     const subtotalCents = items.reduce(
