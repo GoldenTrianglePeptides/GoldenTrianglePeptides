@@ -28,7 +28,14 @@ export default function ShippingFaqPage() {
         {
           heading: "How do I pay?",
           body: [
-            "Checkout is cryptocurrency-only. At checkout you'll be taken to a hosted invoice where you choose a coin and pay. Your order is confirmed automatically once the payment settles on-chain — this can take a few minutes depending on the network.",
+            "Orders settle in cryptocurrency. At checkout you'll be taken to a hosted invoice where you choose a coin and pay. Your order is confirmed automatically once the payment settles on-chain — this can take a few minutes depending on the network.",
+          ],
+        },
+        {
+          heading: "Can I pay with a debit/credit card, Apple Pay, or Google Pay?",
+          body: [
+            "Yes — even though we settle in crypto, you can fund the payment with a card. On the payment page, note the coin, network, exact amount, and wallet address, then use a card-to-crypto service such as MoonPay, Coinbase, or Transak to buy that coin with your card, Apple Pay, or Google Pay and send it to that address (same network). Buy a little extra to cover network fees so the payment isn't short. Once it arrives, your order confirms automatically.",
+            "First-time card purchases require a quick ID check with the on-ramp provider (their requirement), and on-ramp fees and minimums apply.",
           ],
         },
         {

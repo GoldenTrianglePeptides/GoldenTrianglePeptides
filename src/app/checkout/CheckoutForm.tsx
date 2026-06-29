@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/components/CartProvider";
 import { formatPrice } from "@/lib/format";
 import { SHIPPING_FLAT_CENTS } from "@/lib/orderStatus";
+import CardPaymentHelp from "@/components/CardPaymentHelp";
 
 export default function CheckoutForm({
   userName,
@@ -181,6 +182,9 @@ export default function CheckoutForm({
                 coins. Your order is confirmed automatically as soon as the
                 payment is received on the blockchain.
               </p>
+            </div>
+            <div className="mt-4">
+              <CardPaymentHelp />
             </div>
           </section>
         </div>

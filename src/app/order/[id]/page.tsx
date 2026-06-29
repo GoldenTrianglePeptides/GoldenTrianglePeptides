@@ -7,6 +7,7 @@ import OrderStatusWatcher from "./OrderStatusWatcher";
 import AdminShippingControls from "./AdminShippingControls";
 import CancelOrderButton from "@/components/CancelOrderButton";
 import ReorderButton from "@/components/ReorderButton";
+import CardPaymentHelp from "@/components/CardPaymentHelp";
 import {
   PAID_STATUSES,
   FAILED_STATUSES,
@@ -128,6 +129,9 @@ export default async function OrderPage({
               />
             </div>
           )}
+          <div className="mx-auto mt-5 max-w-md text-left">
+            <CardPaymentHelp />
+          </div>
         </div>
       )}
 
