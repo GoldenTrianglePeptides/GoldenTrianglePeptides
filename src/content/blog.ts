@@ -150,6 +150,182 @@ export const POSTS: BlogPost[] = [
       ${RUO}
     `,
   },
+  {
+    slug: "what-is-tb-500",
+    title: "What Is TB-500 (Thymosin Beta-4)?",
+    description:
+      "An educational overview of TB-500, a synthetic fragment related to Thymosin Beta-4, widely studied in tissue-repair and cell-migration research.",
+    date: "2026-06-28",
+    readingMinutes: 4,
+    html: `
+      <p>TB-500 is a synthetic peptide based on a region of Thymosin Beta-4 (TΒ4), a naturally occurring protein involved in actin regulation. It is a common subject in preclinical research on cell migration, angiogenesis, and tissue repair.</p>
+      <h2>Background</h2>
+      <p>Thymosin Beta-4 is one of the most abundant actin-binding proteins in many cell types. TB-500 refers to the active fragment most often used in research, supplied as a lyophilized powder.</p>
+      <h2>Research forms</h2>
+      <ul>
+        <li>Lyophilized powder, commonly 5–20&nbsp;mg vials</li>
+        <li>Reconstituted with bacteriostatic water for in-vitro work — see our <a href="/calculator">reconstitution calculator</a></li>
+      </ul>
+      <h2>Handling</h2>
+      <p>Store lyophilized at −20&nbsp;°C, protected from light; refrigerate after reconstitution. Confirm identity and purity (HPLC) against the lot's Certificate of Analysis. Browse tested material on our <a href="/products">products page</a>.</p>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "semax-and-selank",
+    title: "Semax & Selank: The Nootropic Research Peptides",
+    description:
+      "What Semax and Selank are, how they differ, and why these two peptides are frequently studied together in cognitive and behavioral research models.",
+    date: "2026-06-27",
+    readingMinutes: 4,
+    html: `
+      <p>Semax and Selank are two synthetic peptides originally developed in Russia and frequently grouped together as "nootropic" research peptides. Both are studied in cognitive- and behavioral-research models.</p>
+      <h2>Semax</h2>
+      <p>Semax is a short peptide derived from a fragment of ACTH (adrenocorticotropic hormone). It is studied for its effects on neurotrophic signaling pathways in research settings.</p>
+      <h2>Selank</h2>
+      <p>Selank is a synthetic analog of the immunomodulatory peptide tuftsin. It is frequently studied alongside Semax in anxiety- and stress-pathway research.</p>
+      <h2>Research forms</h2>
+      <ul>
+        <li>Lyophilized powder (commonly 10&nbsp;mg vials)</li>
+        <li>Some variants are amidated (e.g. "NA Selank Amidate") for added stability</li>
+      </ul>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "what-is-ghk-cu",
+    title: "What Is GHK-Cu (Copper Peptide)?",
+    description:
+      "An overview of GHK-Cu, a naturally occurring copper-binding tripeptide widely studied in skin, collagen, and wound-healing research.",
+    date: "2026-06-26",
+    readingMinutes: 3,
+    html: `
+      <p>GHK-Cu is a copper-binding tripeptide (glycyl-L-histidyl-L-lysine complexed with copper) that occurs naturally in plasma. It is one of the most-studied peptides in skin, collagen, and tissue-remodeling research.</p>
+      <h2>Why it's studied</h2>
+      <p>Research literature explores GHK-Cu's role in extracellular-matrix remodeling and its copper-delivery properties in cellular models.</p>
+      <h2>Research forms</h2>
+      <ul>
+        <li>Lyophilized powder, commonly 50–200&nbsp;mg vials</li>
+        <li>Used in both reconstituted and topical research preparations</li>
+      </ul>
+      <p>As with any research peptide, verify purity by HPLC before use.</p>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "cjc-1295-and-ipamorelin",
+    title: "CJC-1295 & Ipamorelin: A Research Overview",
+    description:
+      "What CJC-1295 and Ipamorelin are, the difference between CJC-1295 with and without DAC, and why the two are often studied as a pair.",
+    date: "2026-06-25",
+    readingMinutes: 5,
+    html: `
+      <p>CJC-1295 and Ipamorelin are two growth-hormone–secretagogue research peptides that are frequently studied together because they act on complementary pathways in preclinical models.</p>
+      <h2>CJC-1295</h2>
+      <p>CJC-1295 is a synthetic analog of growth-hormone-releasing hormone (GHRH). It is available in two research forms: <strong>with DAC</strong> (Drug Affinity Complex, longer-acting) and <strong>without DAC</strong> ("No DAC", also called Mod GRF 1-29, shorter-acting).</p>
+      <h2>Ipamorelin</h2>
+      <p>Ipamorelin is a selective ghrelin-receptor agonist (a GHRP). It is studied for its selectivity in receptor-pharmacology research.</p>
+      <h2>Why pair them</h2>
+      <p>Because the two act on different receptors, they are common comparators and combinations in the same research program (e.g. the "CJC-1295 (No DAC) + Ipamorelin" blend). See available blends on our <a href="/products">products page</a>.</p>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "what-is-mots-c",
+    title: "What Is MOTS-c?",
+    description:
+      "An educational overview of MOTS-c, a mitochondrial-derived peptide studied in metabolic and exercise-physiology research.",
+    date: "2026-06-24",
+    readingMinutes: 3,
+    html: `
+      <p>MOTS-c is a mitochondrial-derived peptide (MDP) — a small peptide encoded within mitochondrial DNA. It is studied in metabolic-research and exercise-physiology models.</p>
+      <h2>Why it's studied</h2>
+      <p>Research explores MOTS-c's role in cellular metabolic regulation and mitochondrial signaling. As a research compound it is supplied as a lyophilized powder.</p>
+      <h2>Research forms</h2>
+      <ul>
+        <li>Lyophilized powder, commonly 10–20&nbsp;mg vials</li>
+        <li>Reconstituted with bacteriostatic water — see the <a href="/calculator">calculator</a></li>
+      </ul>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "what-is-tesamorelin",
+    title: "What Is Tesamorelin?",
+    description:
+      "An overview of Tesamorelin, a stabilized GHRH analog studied in metabolic and adipose-tissue research.",
+    date: "2026-06-23",
+    readingMinutes: 3,
+    html: `
+      <p>Tesamorelin is a synthetic, stabilized analog of growth-hormone-releasing hormone (GHRH). It is studied in metabolic and adipose-tissue research models.</p>
+      <h2>Background</h2>
+      <p>As a GHRH analog, Tesamorelin is frequently compared with other growth-hormone–axis research peptides such as CJC-1295. It is supplied as a lyophilized powder.</p>
+      <h2>Handling</h2>
+      <p>Store lyophilized at −20&nbsp;°C; reconstitute with bacteriostatic water and refrigerate. Verify purity by HPLC before use.</p>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "what-is-igf-1-lr3",
+    title: "What Is IGF-1 LR3?",
+    description:
+      "An overview of IGF-1 LR3 (Long R3 IGF-1), a long-acting insulin-like growth factor analog widely used in cell-culture research.",
+    date: "2026-06-21",
+    readingMinutes: 4,
+    html: `
+      <p>IGF-1 LR3 (Long R3 Insulin-like Growth Factor-1) is a synthetic analog of IGF-1 engineered for greater potency and a longer half-life. It is a common supplement in cell-culture and growth-factor research.</p>
+      <h2>Why "LR3"</h2>
+      <p>The "Long R3" modification adds an N-terminal extension and a single amino-acid substitution that reduce binding to IGF-binding proteins, increasing activity in culture compared with native IGF-1.</p>
+      <h2>Research forms</h2>
+      <ul>
+        <li>Lyophilized powder, commonly supplied as 1&nbsp;mg single vials</li>
+        <li>Reconstituted for in-vitro assays</li>
+      </ul>
+      <p>Because LR3 is potent at low concentrations, careful reconstitution math matters — use the <a href="/calculator">calculator</a>.</p>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "bacteriostatic-water-explained",
+    title: "Bacteriostatic Water vs. Sterile Water: What to Use",
+    description:
+      "The difference between bacteriostatic and sterile water for reconstituting research peptides, why benzyl alcohol matters, and how much to add.",
+    date: "2026-06-19",
+    readingMinutes: 4,
+    html: `
+      <p>Reconstituting a lyophilized peptide starts with choosing a diluent. The two most common are bacteriostatic water and sterile water — they are not interchangeable for multi-use research vials.</p>
+      <h2>The difference</h2>
+      <ul>
+        <li><strong>Bacteriostatic water</strong> contains ~0.9% benzyl alcohol, which inhibits bacterial growth. This makes a reconstituted vial suitable for repeated draws over a research window.</li>
+        <li><strong>Sterile water</strong> has no preservative — once opened it is single-use.</li>
+      </ul>
+      <p>For multi-draw research vials, bacteriostatic water is the standard choice.</p>
+      <h2>How much to add</h2>
+      <p>There's no single "correct" volume — it sets the concentration. More water = lower concentration = larger draw volume per dose. Use our <a href="/calculator">reconstitution calculator</a> to pick a volume that gives a convenient draw on a U-100 syringe, and see <a href="/blog/how-to-reconstitute-research-peptides">how to reconstitute</a> for technique.</p>
+      ${RUO}
+    `,
+  },
+  {
+    slug: "glp-1-glp-2-glp-3-explained",
+    title: "GLP-1, GLP-2, GLP-3: What the Names Mean",
+    description:
+      "A plain-English explainer of the GLP-1 / GLP-2 / GLP-3 labels used for semaglutide, tirzepatide, and retatrutide — single, dual, and triple receptor agonists.",
+    date: "2026-06-17",
+    readingMinutes: 4,
+    html: `
+      <p>You'll often see metabolic research peptides labeled "GLP-1," "GLP-2," or "GLP-3." These shorthand labels describe how many incretin receptors the molecule is studied to act on.</p>
+      <h2>The shorthand</h2>
+      <ul>
+        <li><strong>GLP-1 — Semaglutide:</strong> studied as a single-receptor agonist.</li>
+        <li><strong>GLP-2 — Tirzepatide:</strong> studied as a dual-receptor agonist.</li>
+        <li><strong>GLP-3 — Retatrutide:</strong> studied as a triple-receptor agonist.</li>
+      </ul>
+      <p>Note: this 1/2/3 naming is an informal product shorthand for single/dual/triple activity — it is not the formal pharmacological nomenclature.</p>
+      <h2>Going deeper</h2>
+      <p>For a side-by-side, see <a href="/blog/semaglutide-vs-tirzepatide">Semaglutide vs. Tirzepatide</a> and <a href="/blog/retatrutide-glp-3-explained">Retatrutide (GLP-3) Explained</a>. Browse tested material on our <a href="/products">products page</a>.</p>
+      ${RUO}
+    `,
+  },
 ];
 
 export function getPost(slug: string): BlogPost | undefined {
