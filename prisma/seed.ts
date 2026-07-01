@@ -99,7 +99,7 @@ const products: SeedProduct[] = [
   {
     slug: "bpc-157-5mg",
     name: "BPC-157",
-    category: "Healing & Recovery",
+    category: "Tissue & Repair Research",
     cas: "137525-51-0",
     description:
       "A synthetic peptide fragment studied for its role in tissue-repair, angiogenesis, and cellular-recovery research. Lyophilized powder for laboratory research use only.",
@@ -117,7 +117,7 @@ const products: SeedProduct[] = [
   {
     slug: "tb-500-5mg",
     name: "TB-500 (Thymosin Beta-4)",
-    category: "Healing & Recovery",
+    category: "Tissue & Repair Research",
     cas: "77591-33-4",
     description:
       "A synthetic version of the naturally occurring peptide Thymosin Beta-4, studied in cellular-migration and tissue-regeneration research. Lyophilized powder for laboratory research use only.",
@@ -135,7 +135,7 @@ const products: SeedProduct[] = [
   {
     slug: "klow-blend",
     name: "KLOW Blend",
-    category: "Healing & Recovery",
+    category: "Tissue & Repair Research",
     cas: null,
     description:
       "A multi-peptide research blend formulated for combined tissue-repair and dermal research applications. Lyophilized powder for laboratory research use only.",

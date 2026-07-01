@@ -301,7 +301,7 @@ export const POSTS: BlogPost[] = [
       </ul>
       <p>For multi-draw research vials, bacteriostatic water is the standard choice.</p>
       <h2>How much to add</h2>
-      <p>There's no single "correct" volume — it sets the concentration. More water = lower concentration = larger draw volume per dose. Use our <a href="/calculator">reconstitution calculator</a> to pick a volume that gives a convenient draw on a U-100 syringe, and see <a href="/blog/how-to-reconstitute-research-peptides">how to reconstitute</a> for technique.</p>
+      <p>There's no single "correct" volume — it sets the concentration. More water = lower concentration; less water = higher concentration. Use our <a href="/calculator">reconstitution calculator</a> to work out the resulting concentration for a given volume, and see <a href="/blog/how-to-reconstitute-research-peptides">how to reconstitute</a> for technique.</p>
       ${RUO}
     `,
   },

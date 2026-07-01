@@ -17,7 +17,7 @@ const TESTS = [
   },
   {
     title: "Net Peptide Content",
-    body: "Actual peptide mass per vial is measured so your dosing math is accurate.",
+    body: "Actual peptide mass per vial is measured so your concentration math is accurate.",
   },
   {
     title: "Water Content",
